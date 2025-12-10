@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_group_name,access.group.name,ubik_product.model_group_name,base.group_user,1,1,1,1
+access_acceptance_criteria,access.acceptance.criteria,ubik_product.model_acceptance_criteria,base.group_user,1,1,1,1
+access_vendor_acceptance_criteria,access.vendor.acceptance.criteria,ubik_product.model_vendor_acceptance_criteria,base.group_user,1,1,1,1
+access_product_vendor_criteria_line,access.product.vendor.criteria.line,ubik_product.model_product_vendor_criteria_line,base.group_user,1,1,1,1

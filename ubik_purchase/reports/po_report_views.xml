@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="purchase_order_report_inherit" inherit_id="purchase.report_purchaseorder_document">
+
+        <!-- Filter out lot-split lines from the report : starts -->
+        <xpath expr="//tbody" position="before">
+            <t t-set="order_lines"
+            t-value="o.order_line.filtered(lambda l: not l.is_lot_split_line)"/>
+        </xpath>
+
+        <xpath expr="//t[@t-foreach='o.order_line']" position="attributes">
+            <attribute name="t-foreach">order_lines</attribute>
+        </xpath>
+        <!-- Filter out lot-split lines from the report : ends -->
+
         <!-- Step 1: Add 'Sr.' header column before Description -->
         <xpath expr="//table[contains(@class, 'o_has_total_table table o_main_table table-borderless')]//thead/tr/th[1]" position="before">
             <th class="text-center" name="th_sr"><strong>Sr. No.</strong></th>
@@ -93,11 +105,14 @@
                 <t t-if="o.order_type == 'export'">
                     <span>Without</span>
                 </t>
-                <t t-elif="o.order_type == 'sample'">
+                <t t-elif="o.order_type == 'export_sample'">
                     <span>Sample</span>
                 </t>
-                <t t-elif="o.order_type == 'will_update'">
+                <t t-elif="o.order_type == 'domestic_update'">
                     <span>Will Update</span>
+                </t>
+                <t t-elif="o.order_type == 'domestic_sample'">
+                    <span>Sample</span>
                 </t>
                 <t t-else="">
                     <span t-esc="line.sale_price"/>
@@ -271,19 +286,37 @@
                 <div t-if="o.order_type" class="col" style="text-align:center;">
                     <strong>Order Type</strong>
                     <div>
-                        <t t-if="o.order_type == 'export' and o.export_country">
-                          <span t-esc="o.export_country.name"/> Export Order
+                        <t t-if="o.order_type == 'domestic'">
+                            <span>Domestic Order</span>
                         </t>
-                        <t t-elif="o.order_type == 'sample'">
-                          <span> Sample Order</span>
+
+                        <t t-elif="o.order_type == 'domestic_sample'">
+                            <span>Domestic Order Sample</span>
                         </t>
-                        <t t-elif="o.order_type == 'will_update'">
-                          <span> Will Update Order</span>
+
+                        <t t-elif="o.order_type == 'domestic_update'">
+                            <span>Domestic Order Will Update</span>
                         </t>
-                        <t t-else="o.order_type == 'domestic'">
-                          <span> Domestic Order</span>
+
+                        <t t-elif="o.order_type == 'export'">
+                            <span t-if="o.export_country">
+                                <span t-esc="o.export_country.name"/> Export Order
+                            </span>
+                            <span t-else="">
+                                Export Order
+                            </span>
+                        </t>
+
+                        <t t-elif="o.order_type == 'export_sample'">
+                            <span t-if="o.export_country">
+                                <span t-esc="o.export_country.name"/> Export Order Sample
+                            </span>
+                            <span t-else="">
+                                Export Order Sample
+                            </span>
                         </t>
                     </div>
+
                 </div>
 
                 <div t-if="o.delivery_place"  class="col" style="text-align:center;">

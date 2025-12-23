@@ -1,25 +1,27 @@
 from odoo import api, fields, models, _
 import base64
 from odoo.exceptions import ValidationError
+from datetime import datetime
 import logging
 _logger = logging.getLogger(__name__)
 
 class PurchaseTemplate(models.Model):
     _inherit = "purchase.order"
 
-   
     order_type = fields.Selection([
         ('domestic', 'Domestic'),
+        ('domestic_sample', 'Domestic (Sample)'),
+        ('domestic_update', 'Domestic (Will Update)'),
         ('export', 'Export'),
-        ('sample', 'Sample'),
-        ('will_update', 'Will Update'),
+        ('export_sample', 'Export (Sample)'),
+        
     ], string='Order Type', default = 'domestic')
     export_country = fields.Many2one('res.country', string="Export Country")
     delivery_place = fields.Char(string="Place of Delivery", default="Navagam")
     mode_of_transport = fields.Char(string="Mode of Transport")
     delivery_time = fields.Integer(string="Delivery Time (Days)")
     place_of_delivery = fields.Char(string="Place of Delivery")
-
+   
     # code to populate mode of transport from vendor mot 
     @api.onchange('partner_id')
     def _onchange_partner_id_set_mot(self):
@@ -66,11 +68,7 @@ class PurchaseTemplate(models.Model):
             lines = order.order_line.filtered(lambda l: l.product_id.id == product_id)
             order.received_qty = sum(lines.mapped('qty_received'))
     
-    export_country_label = fields.Char(
-        string="Export Country Label",
-        compute="_compute_export_country_label",
-        store=False
-    )
+    export_country_label = fields.Char(string="Export Country Label", compute="_compute_export_country_label", store=False)
 
     @api.depends('order_type', 'export_country')
     def _compute_export_country_label(self):
@@ -80,6 +78,82 @@ class PurchaseTemplate(models.Model):
             else:
                 rec.export_country_label = ""
 
+    ########## (NEW) code to split purchase order lines by lot numbers: starts ##########
+    show_lot_wise = fields.Boolean(string="Show Lot-wise Data", default=False, copy=False)
+    lot_id = fields.Many2one('stock.lot', string="Lot", readonly=True)
+    def action_split_lines_by_lot(self):
+        PurchaseLine = self.env['purchase.order.line']
+
+        for order in self:
+            # Remove previously generated lot-split lines
+            old_lines = order.order_line.filtered(lambda l: l.is_lot_split_line)
+            old_lines.unlink()
+
+            for line in order.order_line.filtered(
+                lambda l: not l.display_type and not l.is_lot_split_line
+            ):
+                moves = line.move_ids.filtered(lambda m: m.state == 'done')
+                if not moves:
+                    continue
+
+                lot_qty_map = {}
+
+                for move in moves:
+                    for ml in move.move_line_ids:
+                        if ml.lot_id:
+                            lot_qty_map.setdefault(ml.lot_id.name, 0.0)
+                            lot_qty_map[ml.lot_id.name] += ml.quantity
+
+                if not lot_qty_map:
+                    continue
+
+                seq = line.sequence + 0.01
+
+                # Create lot-wise NOTE lines under the current line
+                for lot_name, qty in lot_qty_map.items():
+                    PurchaseLine.create({
+                        'order_id': order.id,
+                        'display_type': 'line_note',
+                        'name': f"Lot {lot_name} → Qty Received: {qty}",
+                        'product_qty': 0.0,
+                        'sequence': seq,
+                        'is_lot_split_line': True,
+                    })
+                    seq += 0.01
+
+    def action_toggle_lot_wise(self):
+        for order in self:
+            if order.show_lot_wise:
+                # HIDE → remove lot split lines
+                order.order_line.filtered(lambda l: l.is_lot_split_line).unlink()
+                order.show_lot_wise = False
+            else:
+                # SHOW → reuse existing logic
+                order.action_split_lines_by_lot()
+                order.show_lot_wise = True
+    ########## code to split purchase order lines by lot numbers: ends ##########
+
+    ############# (NEW)code to add purchase status field in purchase order form view : starts #########
+    order_status = fields.Char(string="Order Status",compute="_compute_order_status")
+
+    @api.depends('order_line.product_uom_qty', 'order_line.qty_received')
+    def _compute_order_status(self):
+        for order in self:
+            # Ignore note/section/lot split lines
+            lines = order.order_line.filtered(
+                lambda l: not l.display_type and not l.is_lot_split_line
+            )
+
+            if not lines:
+                order.order_status = "Pending"
+                continue
+
+            # If any line is not fully received → Pending
+            if any(line.qty_received < line.product_uom_qty for line in lines):
+                order.order_status = "Pending"
+            else:
+                order.order_status = "Closed"
+    ############# code to add purchase status field in purchase order form view : ends #########
 
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
@@ -145,11 +219,7 @@ class PurchaseOrderLine(models.Model):
             self.pack = False
             self.custom_uom_id = False
     
-    mrp_display = fields.Char(
-        string="MRP Display",
-        compute="_compute_mrp_display",
-        store=False
-    )
+    mrp_display = fields.Char(string="MRP Display", compute="_compute_mrp_display", store=False)
 
     @api.depends('order_id.order_type', 'sale_price')
     def _compute_mrp_display(self):
@@ -168,6 +238,7 @@ class PurchaseOrderLine(models.Model):
     
     purchase_status = fields.Char(string="Status",compute="_compute_purchase_status", store=False)
 
+    ######### code to add purchase status field in purchase history tree view (found as a smart button in product form view named Purchases) #########
     @api.depends('product_uom_qty', 'qty_received')
     def _compute_purchase_status(self):
         for line in self:
@@ -178,4 +249,24 @@ class PurchaseOrderLine(models.Model):
                 line.purchase_status = "Closed"
             else:
                 line.purchase_status = "Pending"
+    
+    lot_numbers = fields.Char(string="Lot Numbers", compute="_compute_lot_numbers", store=False)
 
+    def _compute_lot_numbers(self):
+        for line in self:
+            lot_names = set()
+
+            # Stock moves created from this PO line
+            moves = line.move_ids.filtered(lambda m: m.state == 'done')
+
+            # Move lines contain lot info
+            for move in moves:
+                for move_line in move.move_line_ids:
+                    if move_line.lot_id:
+                        lot_names.add(move_line.lot_id.name)
+
+            line.lot_numbers = ', '.join(sorted(lot_names)) if lot_names else ''
+    ############ code to add purchase status field in purchase history tree view #########
+    
+    # (NEW) Field to mark lot split lines to show under purchase order lines
+    is_lot_split_line = fields.Boolean(string="Lot Split Line", default=False, copy=False, index=True)

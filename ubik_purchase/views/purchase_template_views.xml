@@ -12,7 +12,7 @@
             </xpath>
             <xpath expr="//field[@name='currency_id']" position="before">
                 <field name="order_type" widget="radio"/>
-                <field name="export_country" invisible="order_type != 'export'"/>
+                <field name="export_country" invisible="order_type not in ('export', 'export_sample')"/>
                 <field name="mode_of_transport"/>
             </xpath>
             <xpath expr="//field[@name='partner_ref']" position="attributes">
@@ -22,7 +22,25 @@
                 <field name="inspection_by"/>
                 <field name="test_certificate"/>
             </xpath>
-            
+
+            <!-- (NEW) Show status near PO form -->
+            <xpath expr="//header" position="inside">
+                <field name="order_status" readonly="1" widget="badge" decoration-success="order_status == 'Closed'"
+                decoration-danger="order_status == 'Pending'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- (NEW) Record to add custom fields in RFQ TREE view of pruchase module -->
+    <record id="view_purchase_template_tree_inherit" model="ir.ui.view">
+        <field name="name">purchase.template.tree.inherit</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="order_status" widget="badge" decoration-success="order_status == 'Closed'"
+                decoration-danger="order_status == 'Pending'"/>
+            </xpath>
         </field>
     </record>
 
@@ -38,6 +56,18 @@
                 <field name="display_pack_size" string="Pack Size"/>
                 <field name="hsn_code"/>
                 <field name="sale_price"/>
+                <field name="lot_numbers"/>
+            </xpath>
+
+            <!-- (NEW) Code to add Split Lot-Wise button -->
+            <xpath expr="//page[@name='products']/field[@name='order_line']" position="before">
+                <div style="display: flex; flex-direction: row-reverse; margin: 10px;">
+                    <!-- SHOW button -->
+                    <button name="action_toggle_lot_wise" type="object" string="Show Lot-wise Data" class="btn-primary" invisible="show_lot_wise == True"/>
+
+                    <!-- HIDE button -->
+                    <button name="action_toggle_lot_wise" type="object" string="Hide Lot-wise Data" class="btn-secondary" invisible ="show_lot_wise == False"/>
+                </div>
             </xpath>
         </field>
     </record>
@@ -51,7 +81,8 @@
             <xpath expr="//field[@name='product_uom_qty']" position="after">
                 <field name="qty_received"/>
                 <field name="pending_qty"/>
-                 <field name="purchase_status"/>
+                <field name="lot_numbers"/>
+                <field name="purchase_status"/>
             </xpath>
             
         </field>

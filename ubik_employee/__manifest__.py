@@ -11,6 +11,11 @@
     'data': [
         # 'security/ir.model.access.csv',
         'views/hr_employee.xml',
+        # 'views/takealot_config.xml',
+        # 'views/product.xml',
+        # 'views/stock.xml',
+        # 'views/sale_order.xml',
+        # 'views/account_move.xml',
 
     ],
     'license': 'OPL-1',

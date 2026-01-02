@@ -270,3 +270,16 @@ class PurchaseOrderLine(models.Model):
     
     # (NEW) Field to mark lot split lines to show under purchase order lines
     is_lot_split_line = fields.Boolean(string="Lot Split Line", default=False, copy=False, index=True)
+
+    # checking
+    # SELECT name, is_storable, type
+    # FROM product_template
+    # WHERE is_storable = FALSE
+    # AND type = 'consu';
+
+    # updating
+    # UPDATE product_template
+    # SET is_storable = TRUE
+    # WHERE is_storable = FALSE
+    # AND type = 'consu';
+

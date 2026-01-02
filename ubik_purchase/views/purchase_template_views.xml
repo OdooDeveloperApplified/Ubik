@@ -84,7 +84,6 @@
                 <field name="lot_numbers"/>
                 <field name="purchase_status"/>
             </xpath>
-            
         </field>
     </record>
 </odoo>

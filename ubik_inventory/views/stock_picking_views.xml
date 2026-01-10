@@ -1,0 +1,16 @@
+<!-- views/stock_picking_view_inherit.xml -->
+<odoo>
+    <record id="view_picking_form_inherit_inspection" model="ir.ui.view">
+        <field name="name">stock.picking.form.inspection.inherit</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_create_inspection_report" type="object" string="Quality Check" class="btn-secondary" invisible = "has_inspection_report"/>
+            </xpath>
+            <xpath expr="//div[@class='oe_button_box']" position="inside">
+                <button class="oe_stat_button" name="action_view_inspection_reports" type="object" icon="fa-check-circle" string="Inspection Report" invisible="not has_inspection_report"/>
+            </xpath> 
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Record to add custom fields in Contacts form view -->
+    <record id="view_contact_template_form_inherit" model="ir.ui.view">
+        <field name="name">contact.template.form.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='sales_purchases']//group[@name='purchase']" position="inside">
+                <field name="delivery_time"/>
+            </xpath>
+
+            <xpath expr="//field[@name='category_id']" position="after">
+                <field name="drug_license_no"/>
+                <field name="food_license_no"/>
+                <field name="mode_of_transport"/>
+                <field name="place_of_delivery"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

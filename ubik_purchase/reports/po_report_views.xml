@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="purchase_order_report_inherit" inherit_id="purchase.report_purchaseorder_document">
+
+        <!-- Filter out lot-split lines from the report : starts -->
+        <xpath expr="//tbody" position="before">
+            <t t-set="order_lines"
+            t-value="o.order_line.filtered(lambda l: not l.is_lot_split_line)"/>
+        </xpath>
+
+        <xpath expr="//t[@t-foreach='o.order_line']" position="attributes">
+            <attribute name="t-foreach">order_lines</attribute>
+        </xpath>
+        <!-- Filter out lot-split lines from the report : ends -->
+
+        <!-- Step 1: Add 'Sr.' header column before Description -->
+        <xpath expr="//table[contains(@class, 'o_has_total_table table o_main_table table-borderless')]//thead/tr/th[1]" position="before">
+            <th class="text-center" name="th_sr"><strong>Sr. No.</strong></th>
+        </xpath>
+
+        <!-- Step 2: Define the serial number variable before the loop -->
+        <xpath expr="//table[contains(@class, 'o_has_total_table table o_main_table table-borderless')]" position="before">
+            <t t-set="sn" t-value="0"/>
+        </xpath>
+
+        <!-- Step 3: Inject a serial number column before each 'line.name' cell -->
+        <xpath expr="//td[span[@t-field='line.name']]" position="before">
+            <td class="text-center" t-if="not line.display_type">
+                <t t-set="sn" t-value="sn + 1"/>
+                <span t-esc="sn"/>
+            </td>
+        </xpath>
+
+        <!-- Add Pack Size column -->
+        <xpath expr="//table[@class='o_has_total_table table o_main_table table-borderless']/thead/tr/th[@name='th_quantity']" position="before">
+            <th name="th_pack_size" class="text-center" style="width:90px;"><strong>Required Shipper Pack Size</strong></th>
+        </xpath>
+
+        <!-- Pack Size value -->
+        <xpath expr="//table[@class='o_has_total_table table o_main_table table-borderless']//tbody//td[span[@t-field='line.product_qty']]" position="before">
+            <td class="text-center" style="width:90px; white-space:nowrap;">
+                <span t-field="line.display_pack_size"/>
+            </td>
+        </xpath>
+
+        <!-- Code to rename description to Product Name -->
+        <xpath expr="//th[@name='th_description']" position="replace">
+            <th name="th_description" class="text-start"><strong>Product Name</strong></th>
+        </xpath>
+
+        <!-- Code to add values under product name field -->
+        <xpath expr="//table[@class='o_has_total_table table o_main_table table-borderless']//tbody//td[span[@t-field='line.name']]" position="replace">
+            <td>
+                <span t-field="line.name"/>
+                <t t-if="line.display_name != line.name">
+                    <br/>
+                    <span t-esc="line.display_name"/>
+                </t>
+            </td>
+        </xpath>
+
+        <!-- Add HSN column -->
+        <xpath expr="//table[@class='o_has_total_table table o_main_table table-borderless']/thead/tr/th[@name='th_pack_size']" position="after">
+            <th name="th_hsn" class="text-center"><strong>HSN/SAC Code</strong></th>
+        </xpath>
+
+        <!-- HSN value -->
+        <xpath expr="//table[@class='o_has_total_table table o_main_table table-borderless']//tbody//td[span[@t-field='line.display_pack_size']]" position="after">
+            <td class="text-center">
+                <span t-esc="line.product_id.l10n_in_hsn_code or ''"/>
+            </td>
+        </xpath>
+
+         <!-- Add product pack column -->
+        <xpath expr="//table[@class='o_has_total_table table o_main_table table-borderless']/thead/tr/th[@name='th_description']" position="after">
+            <th name="th_product_pack" class="text-center"><strong>Product Pack</strong></th>
+        </xpath>
+
+        <!-- Product pack value -->
+        <xpath expr="//table[@class='o_has_total_table table o_main_table table-borderless']//tbody//td[span[@t-field='line.name']]" position="after">
+            <td class="text-center">
+                <span t-esc="line.display_product_pack or ''"/>
+            </td>
+        </xpath>
+
+        <!-- code to rename taxes to GST -->
+        <xpath expr="//th[@name='th_taxes']" position="replace">
+            <th name="th_taxes" class="text-center"><strong>GST</strong></th>
+        </xpath>
+
+
+        <!-- code to rename unit price to Rate -->
+        <xpath expr="//th[@name='th_price_unit']" position="replace">
+            <th name="th_price_unit" class="text-center"><strong>Rate</strong></th>
+        </xpath>
+
+        <!-- Code to add sales price(MRP) column before Rate -->
+        <xpath expr="//table[@class='o_has_total_table table o_main_table table-borderless']/thead/tr/th[@name='th_price_unit']" position="before">
+            <th name="th_salesprice" class="text-center"><strong>MRP</strong></th>
+        </xpath>
+
+        <!-- Code to add the MRP value -->
+        <xpath expr="//table[@class='o_has_total_table table o_main_table table-borderless']//tbody//td[span[@t-field='line.price_unit']]" position="before">
+            <td class="text-center">
+                <t t-if="o.order_type == 'export'">
+                    <span>Without</span>
+                </t>
+                <t t-elif="o.order_type == 'export_sample'">
+                    <span>Sample</span>
+                </t>
+                <t t-elif="o.order_type == 'domestic_update'">
+                    <span>Will Update</span>
+                </t>
+                <t t-elif="o.order_type == 'domestic_sample'">
+                    <span>Sample</span>
+                </t>
+                <t t-else="">
+                    <span t-esc="line.sale_price"/>
+                </t>
+            </td>
+        </xpath>
+
+        <!-- Remove discount column header -->
+        <xpath expr="//th[@name='th_discount']" position="replace">
+        </xpath>
+
+        <!-- Remove discount column cell -->
+        <xpath expr="//span[@t-field='line.discount']/ancestor::td[1]" position="replace">
+        </xpath>
+
+        <!-- Replace Qty column: show ONLY qty without UOM and without decimals -->
+        <xpath expr="//td[span[@t-field='line.product_qty']]" position="replace">
+            <td class="text-center">
+                <span t-esc="('%.0f' % line.product_qty)"/>
+            </td>
+        </xpath>
+
+        <!-- Remove Tax Names from Taxes column -->
+        <!-- Replace Taxes column: show only tax percentages -->
+            <xpath expr="//td[span[contains(@t-out, 'tax')]]" position="replace">
+                <td class="text-end">
+                    <span t-out="', '.join([str(int(tax.amount)) + '%' for tax in line.taxes_id])"/>
+                </td>
+            </xpath>
+
+
+        <!-- Code to add custom div after Payment terms block -->
+        <xpath expr="//span[@t-field='o.payment_term_id']" position="after">
+            <div style="page-break-inside: avoid;">
+                <!-- Your custom text here -->
+                <strong>Note:</strong> Please submit a COA copy along witht he Invoice it is compulsory.<br/>
+                <strong>Inspection:</strong> <span t-esc="o.inspection_by"/> <br/>
+                <strong>COA/Test certificate:</strong> <span t-esc="o.test_certificate"/> <br/>
+            </div>
+            <div style="page-break-inside: avoid;">
+                <div class="row mt-4" style="border: 1px solid black;">
+                    <div class="col-6 text-center" style="border-right: 1px solid black;">
+                        <span></span><br/>
+                        <span>FOR AND ON BEHALF OF</span><br/>
+                        <span><strong>UBIK SOLUTIONS PVT LTD</strong></span><br/>
+                        <span>PURCHASE INCHARGE</span><br/>
+                        <span></span><br/>
+                    </div>
+                    <div class="col-6 text-center">
+                        <span><strong>For UBIK SOLUTIONS PVT LTD</strong></span><br/><br/><br/><br/>
+                        
+                        <span><strong>Parth Tanna</strong></span>
+                        <!-- <div t-if="o.user_id" class="col">
+                        <div t-field="o.user_id"/> -->
+                    </div>
+                </div>
+                <div class="row" style="border: 1px solid black; border-top:none;">
+                    <span style="margin-left:5px;"> F:PR:01/REV-00/01.10.2023</span>
+                </div>
+            </div>
+        </xpath>
+
+        <!-- Code to replace the shipped to address with the custom fields required -->
+        <xpath expr="//t[@t-call='web.external_layout']" position="inside">
+            <t t-set="o" t-value="o.with_context(lang=o.partner_id.lang)"/>
+                <t t-set="information_block">
+                    <strong class="d-block mb-1">Vendor/Supplier Address</strong>
+                    
+                    <!-- Use contact widget only for address + name (no phone/vat) -->
+                    <div t-field="o.partner_id"
+                        t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True, "phone_icons": True}'/>
+                    <!-- Phone (if present) -->
+                    <t t-if="o.partner_id.phone">
+                        <div>
+                            <i class="fa fa-phone" aria-hidden="true"></i>
+                            <span t-esc="o.partner_id.phone"/>
+                        </div>
+                    </t>
+                    <!-- Mobile (if present) - inserted AFTER phone and BEFORE GSTIN -->
+                    <t t-if="o.partner_id.mobile">
+                        <div>
+                            <i class="fa fa-mobile" aria-hidden="true"></i>
+                            <span t-esc="o.partner_id.mobile"/>
+                        </div>
+                    </t>
+                    <!-- GSTIN / VAT (if present) -->
+                    <t t-if="o.partner_id.vat">
+                        <div>
+                            <strong>GST No. </strong><span t-esc="o.partner_id.vat"/>
+                        </div>
+                    </t>
+
+                    <t t-if="o.partner_id.drug_license_no">
+                        <div>
+                            <strong>Drug License No: </strong><span t-esc="o.partner_id.drug_license_no"/>
+                        </div>
+                    </t>
+
+                    <t t-if="o.partner_id.food_license_no">
+                        <div>
+                            <strong>Food License No: </strong><span t-esc="o.partner_id.food_license_no"/>
+                        </div>
+                    </t>
+                </t>
+        </xpath>
+
+       <!-- Replace the address block so we can control the order of phone / mobile / GSTIN -->
+        <xpath expr="//t[@t-set='address']" position="replace">
+            <t t-set="address">
+                <strong class="d-block mb-1">Delivery Warehouse Address</strong>
+                <div>
+                    <span t-esc="o.company_id.name"/><br/>
+                    <span t-esc="o.company_id.street"/><br/>
+                    <t t-if="o.company_id.street2"><span t-esc="o.company_id.street2"/><br/></t>
+                    <span t-esc="o.company_id.city"/>
+                    <t t-if="o.company_id.state_id">, <span t-esc="o.company_id.state_id.name"/></t>
+                    <t t-if="o.company_id.zip"> - <span t-esc="o.company_id.zip"/>,</t>
+                    <t t-if="o.company_id.country_id"><span t-esc="o.company_id.country_id.name"/><br/></t>
+                    <t t-if="o.company_id.phone">
+                        <span>
+                            <i class="fa fa-phone" aria-hidden="true"></i>
+                            <t t-esc="o.company_id.phone"/><br/>
+                        </span>
+                    </t>
+                    <t t-if="o.company_id.mobile">
+                        <span>
+                            <i class="fa fa-mobile" aria-hidden="true"></i>
+                            <t t-esc="o.company_id.mobile"/><br/>
+                        </span>
+                    </t>
+                    <t t-if="o.company_id.vat">
+                        <strong>GST No. </strong>
+                        <span t-esc="o.company_id.vat"/><br/>
+                    </t>
+                    <t t-if="o.company_id.l10n_in_pan">
+                        <strong>PAN No. </strong>
+                        <span t-esc="o.company_id.l10n_in_pan"/><br/>
+                    </t>
+                    <t t-if="o.company_id.company_registry">
+                        <strong>CIN NUMBER - </strong>
+                        <span t-esc="o.company_id.company_registry"/><br/>
+                    </t>
+                    <t t-if="o.company_id.partner_id.drug_license_no">
+                        <div>
+                            <strong>Drug License No:</strong>
+                            <span t-esc="o.company_id.partner_id.drug_license_no"/><br/>
+                        </div>
+                    </t>
+                    <t t-if="o.company_id.partner_id.food_license_no">
+                        <div>
+                            <strong>Food License No:</strong>
+                            <span t-esc="o.company_id.partner_id.food_license_no"/>
+                        </div><br/>
+                    </t>
+                </div>
+            </t>
+        </xpath>
+
+        <!-- Code to add place of delivery, order type and MOT -->
+        <xpath expr="//div[@id='informations']" position="replace">
+            <!-- Your custom replacement block -->
+            <div id="informations" class="row mb-4">
+                <div t-if="o.date_approve" class="col" style="text-align:center;">
+                    <strong>Order Date</strong>
+                    <p t-field="o.date_approve" t-options="{'date_only': 'true'}" class="m-0"/>
+                </div>
+                <div t-if="o.date_order" class="col" style="text-align:center;">
+                    <strong>Required Delivery Date</strong>
+                    <p t-field="o.date_order" t-options="{'date_only': 'true'}" class="m-0"/>
+                </div>
+                <div t-if="o.order_type" class="col" style="text-align:center;">
+                    <strong>Order Type</strong>
+                    <div>
+                        <t t-if="o.order_type == 'domestic'">
+                            <span>Domestic Order</span>
+                        </t>
+
+                        <t t-elif="o.order_type == 'domestic_sample'">
+                            <span>Domestic Order Sample</span>
+                        </t>
+
+                        <t t-elif="o.order_type == 'domestic_update'">
+                            <span>Domestic Order Will Update</span>
+                        </t>
+
+                        <t t-elif="o.order_type == 'export'">
+                            <span t-if="o.export_country">
+                                <span t-esc="o.export_country.name"/> Export Order
+                            </span>
+                            <span t-else="">
+                                Export Order
+                            </span>
+                        </t>
+
+                        <t t-elif="o.order_type == 'export_sample'">
+                            <span t-if="o.export_country">
+                                <span t-esc="o.export_country.name"/> Export Order Sample
+                            </span>
+                            <span t-else="">
+                                Export Order Sample
+                            </span>
+                        </t>
+                    </div>
+
+                </div>
+
+                <div t-if="o.delivery_place"  class="col" style="text-align:center;">
+                    <strong>Place of Delivery</strong>
+                    <div t-field="o.delivery_place"/>
+                </div>
+                <div t-if="o.mode_of_transport"  class="col" style="text-align:center;">
+                    <strong>Mode of Transport</strong>
+                    <div t-field="o.mode_of_transport"/>
+                </div>
+            </div>
+        </xpath>
+
+        <xpath expr="//table[contains(@class, 'o_main_table')]" position="before">
+            <style>
+                table.o_main_table, 
+                
+                table.o_main_table td {
+                    border: 1px solid black !important;
+                    border-collapse: collapse !important;
+                }
+            </style>
+        </xpath>
+    </template>
+</odoo>

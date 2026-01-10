@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_order_form_inherit_pack" model="ir.ui.view">
+        <field name="name">sale.order.form.pack</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!-- Add columns in the order line tree (quotation view) -->
+            <xpath expr="//field[@name='order_line']//list//field[@name='product_uom_qty']" position="before">
+                <field name="pack" string="Pack" class="o_inline"/>
+                <field name="custom_uom_id" nolabel="1" class="o_inline"/>
+            </xpath>
+
+            <!-- Free scheme button -->
+            <xpath expr="//button[@name='action_open_discount_wizard']" position="after">
+                <button name="action_open_free_charges_wizard"
+                        string="Apply Free Scheme"
+                        type="object"
+                        class="btn-secondary"
+                        icon="fa-plus"/>
+            </xpath>
+        </field>
+    </record> 
+</odoo>

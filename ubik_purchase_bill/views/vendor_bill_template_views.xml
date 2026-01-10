@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Record to add custom fields in RFQ form view of pruchase module -->
+    <record id="view_account_move_form_inherit" model="ir.ui.view">
+        <field name="name">account.move.form.inherit</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+           <xpath expr="//field[@name='invoice_line_ids']//field[@name='product_id']"
+                   position="after">
+                <button name="action_show_po"
+                        type="object"
+                        string="PO"
+                        icon="fa-file-text-o"
+                        class="btn-primary"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="purchase_bill_line_match_tree_inherit" model="ir.ui.view">
+        <field name="name">purchase.bill.line.match.list.inherit</field>
+        <field name="model">purchase.bill.line.match</field>
+        <field name="inherit_id" ref="purchase.purchase_bill_line_match_tree"/>
+        <field name="arch" type="xml">
+           <xpath expr="//button[@name='action_match_lines']" position="after">
+                <button name="merge_po_line_to_vendor_bill"
+                        type="object"
+                        string="Update Vendor Bill"
+                        class="btn-primary"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

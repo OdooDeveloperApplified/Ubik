@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Record to add Group name field in Product form view -->
+    <record id="view_group_name_product_inherit" model="ir.ui.view">
+        <field name="name">product.template.form.inherit</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='type']" position="after">
+                <field name="group_id"/>
+                <!-- <field name="shelf_life"/> -->
+            </xpath>
+            <xpath expr="//field[@name='type']" position="after">
+                <label for="pack" class="oe_inline"/>
+                <div class="o_row w-100">
+                    <field name="pack"/>
+                    <field name="custom_uom_id"/>
+                </div>
+                <label for="pack_size" class="oe_inline"/>
+                <div class="o_row w-100">
+                    <field name="pack_size"/>
+                    <field name="pack_size_uom_id"/>
+                </div>
+            </xpath>
+            <!-- Insert in stat buttons section -->
+            <xpath expr="//div[@class='oe_button_box']" position="inside">
+                <button type="object"
+                    name="action_open_inspection_reports"
+                    class="oe_stat_button"
+                    icon="fa-file">
+                    <field name="inspection_line_ids" widget="statinfo"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Record to add Group name field in Product tree view -->
+    <record id="view_product_template_tree_inherit_brand" model="ir.ui.view">
+        <field name="name">product.template.tree.inherit.brand</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="group_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Record to add Group name field in Product Variant form view -->
+    <record id="view_product_variant_template_form_inherit_brand" model="ir.ui.view">
+        <field name="name">product.product.form.inherit.brand</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='type']" position="after">
+                <field name="group_id"/>
+                <field name="shelf_life"/>
+            </xpath>
+            <xpath expr="//field[@name='type']" position="after">
+                <label for="pack" class="oe_inline"/>
+                <div class="o_row w-100">
+                    <field name="pack"/>
+                    <field name="custom_uom_id"/>
+                </div>
+                <label for="pack_size" class="oe_inline"/>
+                <div class="o_row w-100">
+                    <field name="pack_size"/>
+                    <field name="pack_size_uom_id"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Record to add Group name field in Product Variant tree view -->
+    <record id="view_product_variant_tree_inherit_brand" model="ir.ui.view">
+        <field name="name">product.product.tree.inherit.brand</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_product_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="group_id"/>
+            </xpath>
+            
+        </field>
+    </record>
+
+    <!-- Record to add Product Specifications page besides General Information page in product form view notebook -->
+    <record id="view_product_template_form_product_specification" model="ir.ui.view">
+        <field name="name">product.template.form.product_specification</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='general_information']" position="after">
+                <page name="specification" string="Product Specifications">
+                    <group>
+                        <field name="shelf_life"/>
+                        <field name="categ_id"/>
+                    </group>
+                        
+                    <group string = "Technical parameters">
+                        <group>
+                            <field name="color"/>
+                            <field name="spreadibility"/>
+                            <field name="consistency"/>
+                        </group>  
+                    </group>
+                    <group string = "Packaging Criteria">
+                        <group string="Container/Strip">
+                            <field name="container_type"/>
+                            <field name="container_size"/>
+                        </group>  
+                        <group string="Cap">
+                            <field name="cap_type"/>
+                            <field name="cap_size"/>
+                        </group>  
+                        <group string="Label">
+                            <field name="label_type"/>
+                            <field name="label_size"/>
+                        </group>  
+                    </group>
+                    <group string = "Secondary Packaging">
+                        <group string="Monocarton">
+                            <field name="monocarton_type"/>
+                            <field name="monocarton_size"/>
+                        </group>  
+                    </group>
+                    <group string = "Master Packaging">
+                        <group>
+                            <field name="master_pack_type"/>
+                            <field name="master_pack_size"/>
+                        </group>  
+                    </group>
+                    <group string = "Total">
+                        <group>
+                            <field name="total_pcs_per_box"/>
+                        </group>  
+                    </group>
+                </page>
+            </xpath>
+            <xpath expr="//page[@name='specification']" position="after">
+                <page string="Finished Product Acceptance Criteria">
+                    <group>
+                        <field name="vendor_id"/>
+                    </group>
+                    <group>
+                        <field name="vendor_criteria_line_ids"  context="{'default_vendor_id': id}" widget="one2many_list" nolabel="1">
+                             <list string="Vendor Criteria" editable="bottom" model="product.vendor.criteria.line">
+                                <field name="criteria_id"/>
+                                <field name="value"/>
+                            </list>
+                        </field>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_partner_form_inherit_acceptance_tab" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.acceptance.tab</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Insert the notebook after address fields or where appropriate -->
+           <xpath expr="//page[@name='internal_notes']" position="after">
+                <page string="Product Parameters" name="acceptance_criteria_page">
+                    <group>
+                        <field name="vendor_acceptance_ids" widget="one2many_list" nolabel="1">
+                            <list editable="bottom">
+                                <field name="criteria_id"/>
+                                <!-- <field name="value"/> -->
+                            </list>
+                        </field>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

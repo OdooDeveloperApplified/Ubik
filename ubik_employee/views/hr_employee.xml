@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_employee_form_inherit" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.empcode</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <!-- Change label of barcode field -->
+            <xpath expr="//field[@name='barcode']" position="attributes">
+                <attribute name="string">Employee Code</attribute>
+            </xpath>
+            <xpath expr="//field[@name='identification_id']" position="attributes">
+                <attribute name="string">Aadhaar Card No.</attribute>
+            </xpath>
+            <xpath expr="//field[@name='ssnid']" position="attributes">
+                <attribute name="string">PAN Card No.</attribute>
+            </xpath>
+            
+            <xpath expr="//field[@name='mobile_phone']" position="after">
+                <field name="doj" />
+            </xpath>
+
+            <!-- UBIK APP CODE: starts -->
+            <xpath expr="//field[@name='coach_id']" position="after">
+                <!-- <field name="territory_id"/> -->
+
+                <!-- New code for multi territories assigned to MR in Employee module: starts -->
+                <field name="territory_ids" widget="many2many_tags"/>
+                <!-- New code for multi territories assigned to MR in Employee module: ends -->
+                
+                <field name="product_category_ids" widget="many2many_tags"/>
+            </xpath>
+            <xpath expr="//sheet/notebook" position="before">
+                <group string="MR Transfer">
+                    <field name="replacement_employee_id"/>
+                    <button name="action_transfer_mr_records"
+                            string="Transfer Records"
+                            type="object"
+                            class="btn-primary"
+                            confirm="Are you sure you want to transfer all MR records to the selected employee?"/>
+                </group>
+            </xpath>
+            <!-- UBIK APP CODE: ends -->
+        </field>
+    </record>
+</odoo>

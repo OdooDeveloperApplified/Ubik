@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_free_scheme_wizard,access.free.scheme.wizard,ubik_sales.model_free_scheme_wizard,base.group_user,1,1,1,1
+access_so_move_lot_wizard,access.so.move.lot.wizard,ubik_sales.model_so_move_lot_wizard,base.group_user,1,1,1,1
+access_so_move_lot_wizard_line,access.so.move.lot.wizard.line,ubik_sales.model_so_move_lot_wizard_line,base.group_user,1,1,1,1

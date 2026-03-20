@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_free_scheme_wizard_form" model="ir.ui.view">
+        <field name="name">free.scheme.wizard.form</field>
+        <field name="model">free.scheme.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Add Free Scheme">
+                <group>
+                    <group>
+                        <field name="product_id"/>
+                    </group>
+                    <group>
+                        <field name="product_num"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_apply_free_charges" string="Apply" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

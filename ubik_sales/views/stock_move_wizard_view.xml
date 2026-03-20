@@ -1,0 +1,29 @@
+<odoo>
+    <record id="view_so_move_lot_wizard_form" model="ir.ui.view">
+        <field name="name">so.move.lot.wizard.form</field>
+        <field name="model">so.move.lot.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Open: Stock move">
+                <field name="line_ids">
+                    <list editable="bottom">
+                        <field name="location_id" string="Pick From"/>
+                        <field name="lot_id"/>
+                        <field name="expiration_date"/>
+                        <field name="available_qty" readonly="1"/>
+                        <field name="qty"/>
+                        <field name="product_uom_id"/>
+                    </list>
+                </field>
+                <footer>
+                    <!-- <button string="Confirm" type="object" name="action_confirm" class="btn-primary"/> -->
+                     <button string="Apply"
+                        type="object"
+                        name="action_apply"
+                        class="btn-primary"/>
+   
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

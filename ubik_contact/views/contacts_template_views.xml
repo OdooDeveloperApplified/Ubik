@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Record to add custom fields in Contacts form view -->
+    <record id="view_contact_template_form_inherit" model="ir.ui.view">
+        <field name="name">contact.template.form.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='sales_purchases']//group[@name='purchase']" position="inside">
+                <field name="delivery_time"/>
+            </xpath>
+
+            <xpath expr="//field[@name='category_id']" position="after">
+                <field name="drug_license_no"/>
+                <field name="food_license_no"/>
+                <field name="mode_of_transport"/>
+                <field name="place_of_delivery"/>
+            </xpath>
+            
+            <!-- New code relating to MR & Doctor:UBIK APP CODE starts -->
+            <xpath expr="//field[@name='function']" position="after">
+                <field name="territory_id"/>
+            </xpath>
+
+            <xpath expr="//h1" position="after">
+                <group>
+                    <field name="is_doctor"/>
+                    <field name="doc_unique_id" />
+                </group>
+            </xpath>
+           <!-- New code relating to MR & Doctor:UBIK APP CODE ends -->
+        </field>
+    </record>
+</odoo>

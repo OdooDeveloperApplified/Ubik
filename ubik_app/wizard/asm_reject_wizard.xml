@@ -1,0 +1,32 @@
+<odoo>
+    <!-- Reject Wizard Form -->
+    <record id="view_mr_doctor_reject_wizard_form" model="ir.ui.view">
+        <field name="name">mr.doctor.reject.wizard.form</field>
+        <field name="model">mr.doctor.reject.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reject Record">
+                <group>
+                    <field name="reason"/>
+                </group>
+                <footer>
+                    <button name="action_confirm_reject"
+                            string="Confirm"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="Cancel"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Wizard Action -->
+    <record id="action_mr_doctor_reject_wizard" model="ir.actions.act_window">
+        <field name="name">Rejection Reason</field>
+        <field name="res_model">mr.doctor.reject.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_mr_doctor_reject_wizard_form"/>
+        <field name="target">new</field>
+    </record>
+</odoo>

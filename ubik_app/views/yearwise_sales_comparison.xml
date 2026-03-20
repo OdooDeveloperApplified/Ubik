@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_mr_doctor_avg_sales_report_tree" model="ir.ui.view">
+        <field name="name">mr.doctor.avg.sales.report.tree</field>
+        <field name="model">mr.doctor.avg.sales.report</field>
+        <field name="arch" type="xml">
+            <list string="Doctor Avg Sales (FY Comparison)" create="0">
+                <field name="territory_id"/>
+                <field name="doc_unique_id"/>
+                <field name="doctor_id"/>
+                <field name="fiscal_year" optional="1"/>
+
+                <field name="prev_total"/>
+                <field name="curr_total"/>
+
+                <field name="prev_avg"/>
+                <field name="curr_avg"/>
+
+                <field name="total_diff"/>
+                <field name="avg_diff"/>
+                <field name="pct_change"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_yearwise_sales_search" model="ir.ui.view">
+        <field name="name">yearwise.sales.search</field>
+        <field name="model">mr.doctor.avg.sales.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="territory_id"/>
+                
+               
+                <field name="fiscal_year"/>
+    
+                <filter string="Current Year"
+                    name="current_year"
+                    domain="[('is_current_fy', '=', True)]"/>
+
+            </search>
+        </field>
+    </record>
+
+    <record id="action_mr_doctor_avg_sales_report" model="ir.actions.act_window">
+        <field name="name">Difference with percentage(%)</field>
+        <field name="res_model">mr.doctor.avg.sales.report</field>
+        <field name="view_mode">list</field>
+        <field name="context">
+            {
+                
+                'search_default_current_year': 1
+            }
+        </field>
+    </record>
+
+<menuitem id="menu_mr_doctor_avg_sales_report"
+          name="Yearly Avg Sales"
+          parent="ubik_app.menu_report_doctor"
+          action="action_mr_doctor_avg_sales_report" sequence="30"/>
+
+</odoo>

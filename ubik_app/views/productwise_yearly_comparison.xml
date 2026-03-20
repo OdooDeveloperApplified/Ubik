@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_mr_product_fy_comparison_tree" model="ir.ui.view">
+        <field name="name">mr.product.fy.comparison.tree</field>
+        <field name="model">mr.product.fy.comparison</field>
+        <field name="arch" type="xml">
+            <list string="Product Wise Sales Analysis" create="0">
+                <field name="territory_id"/>
+                <field name="category_id"/>
+                <field name="product_id"/>
+
+                <field name="prev_qty"/>
+                <field name="prev_amt"/>
+
+                <field name="curr_qty"/>
+                <field name="curr_amt"/>
+
+                <field name="diff_qty"/>
+                <field name="diff_amt"/>
+
+                <field name="pct_qty"/>
+                <field name="pct_amt"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_mr_product_fy_comparison" model="ir.actions.act_window">
+        <field name="name">Product Wise Sales Analysis</field>
+        <field name="res_model">mr.product.fy.comparison</field>
+        <field name="view_mode">list</field>
+        <field name="context">
+            {'group_by': ['territory_id', 'category_id']}
+        </field>
+    </record>
+
+    <menuitem id="menu_report_product" name="Productwise" parent="ubik_app.menu_report_root"/>
+
+    <menuitem id="menu_product_fy_comparison" name="Product Wise Sales Analysis" parent="ubik_app.menu_report_product" action="action_mr_product_fy_comparison"/>
+
+</odoo>

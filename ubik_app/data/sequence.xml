@@ -1,0 +1,9 @@
+<odoo>
+    <record id="seq_mr_doctor" model="ir.sequence">
+        <field name="name">MR Doctor Sequence</field>
+        <field name="code">mr.doctor</field>
+        <field name="prefix">MR/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action for Bulk Lock Wizard -->
+    <record id="action_mr_doctor_bulk_lock_wizard" model="ir.actions.act_window">
+        <field name="name">Bulk Lock/Unlock Records</field>
+        <field name="res_model">mr.doctor.bulk.lock.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Form View for Bulk Lock Wizard -->
+    <record id="view_mr_doctor_bulk_lock_wizard_form" model="ir.ui.view">
+        <field name="name">mr.doctor.bulk.lock.wizard.form</field>
+        <field name="model">mr.doctor.bulk.lock.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="user_id" options="{'no_create': True}"/>
+                         <field name="doctor_id" 
+                               options="{'no_create': True}"
+                               domain="[('is_doctor','=',True), ('id','in', allowed_doctor_ids)]"
+                               context="{'default_user_id': user_id}"/>
+                        <field name="category_id" 
+                               options="{'no_create': True}"
+                               domain="[('id','in', allowed_category_ids)]"/>
+                        <field name="month"/>
+                        <field name="operation_type" widget="radio"/>
+                        <field name="record_count" readonly="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_process_bulk_lock" 
+                            type="object" 
+                            string="Process" 
+                            class="btn-primary"
+                            context="{'confirm': 'Are you sure you want to process %s records?' % record_count}"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Add menu item under admin section -->
+    <menuitem id="menu_mr_doctor_bulk_lock" 
+              name="Bulk Lock/Unlock Records" 
+              parent="ubik_app.menu_mr_doctor_visit_root" 
+              action="action_mr_doctor_bulk_lock_wizard"
+              sequence="20"
+              groups="base.group_system"/>
+</odoo>

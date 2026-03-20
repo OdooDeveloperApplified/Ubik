@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- Quarterly Target vs Achievement Tree View -->
+    <record id="view_mr_target_achievement_quarterly_tree" model="ir.ui.view">
+        <field name="name">mr.target.achievement.quarterly.tree</field>
+        <field name="model">mr.target.achievement.quarterly.report</field>
+        <field name="arch" type="xml">
+            <list create="0" delete="0" editable="bottom">
+                <!-- New code: Button to show changes -->
+                <button name="action_view_change_history" type="object" class="btn-primary" icon="fa-history"/>
+        
+                <!-- Basic Info -->
+                <field name="territory_id"/>
+                <field name="mr_id"/>
+                <field name="category_id"/>
+                <field name="fiscal_year" optional="1"/>
+                <field name="yearly_target"/>
+
+                <!-- ================= Q1 : APR / MAY / JUN ================= -->
+                <field name="04_tgt" string="Apr Tgt" sum="Apr Target" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="apr_ach" sum="Apr Ach" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="apr_sur_def" string="Apr Sur/Def" sum="Apr Sur/Def" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="apr_pct" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+
+                <field name="05_tgt" string="May Tgt" sum="May Target" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="may_ach" sum="May Ach" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="may_sur_def" string="May Sur/Def" sum="May Sur/Def" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="may_pct" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+
+                <field name="06_tgt" string="Jun Tgt" sum="Jun Target" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="jun_ach" sum="Jun Ach" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="jun_sur_def" string="Jun Sur/Def" sum="Jun Sur/Def" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="jun_pct" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+
+                <field name="q1_tgt" sum="Q1 Target" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="q1_ach" sum="Q1 Ach" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="q1_sur_def" string="Q1 Sur/Def" sum="Q1 Sur/Def" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="q1_pct" column_invisible="context.get('show_q1') != True and (context.get('show_q2') or context.get('show_q3') or context.get('show_q4'))"/>
+
+                <!-- ================= Q2 : JUL / AUG / SEP ================= -->
+                <field name="07_tgt" string="Jul Tgt" sum="Jul Target" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="jul_ach" sum="Jul Ach" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="jul_sur_def" string="Jul Sur/Def" sum="Jul Sur/Def" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="jul_pct" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+
+                <field name="08_tgt" string="Aug Tgt" sum="Aug Target" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="aug_ach" sum="Aug Ach" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="aug_sur_def" string="Aug Sur/Def" sum="Aug Sur/Def" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="aug_pct" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+
+                <field name="09_tgt" string="Sep Tgt" sum="Sep Target" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="sep_ach" sum="Sep Ach" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="sep_sur_def" string="Sep Sur/Def" sum="Sep Sur/Def" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="sep_pct" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+
+                <field name="q2_tgt" sum="Q2 Target" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="q2_ach" sum="Q2 Ach" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="q2_sur_def" string="Q2 Sur/Def" sum="Q2 Sur/Def" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+                <field name="q2_pct" column_invisible="context.get('show_q2') != True and (context.get('show_q1') or context.get('show_q3') or context.get('show_q4'))"/>
+
+                <!-- ================= Q3 : OCT / NOV / DEC ================= -->
+                <field name="10_tgt" string="Oct Tgt" sum="Oct Target" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+                <field name="oct_ach" sum="Oct Ach" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+                <field name="oct_sur_def" string="Oct Sur/Def" sum="Oct Sur/Def" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+                <field name="oct_pct" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+
+                <field name="11_tgt" string="Nov Tgt" sum="Nov Target" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+                <field name="nov_ach" sum="Nov Ach" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+                <field name="nov_sur_def" string="Nov Sur/Def" sum="Nov Sur/Def" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+                <field name="nov_pct" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+
+                <field name="12_tgt" string="Dec Tgt" sum="Dec Target" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+                <field name="dec_ach" sum="Dec Ach" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+                <field name="dec_sur_def" string="Dec Sur/Def" sum="Dec Sur/Def" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+                <field name="dec_pct" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+
+                <field name="q3_tgt" sum="Q3 Tgt" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+                <field name="q3_ach" sum="Q3 Ach" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+                <field name="q3_sur_def" string="Q3 Sur/Def" sum="Q3 Sur/Def" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+                <field name="q3_pct" column_invisible="context.get('show_q3') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q4'))"/>
+
+                <!-- ================= Q4 : JAN / FEB / MAR ================= -->
+                <field name="01_tgt" string="Jan Tgt" sum="Jan Target" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+                <field name="jan_ach" sum="Jan Ach" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+                <field name="jan_sur_def" string="Jan Sur/Def" sum="Jan Sur/Def" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+                <field name="jan_pct" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+
+                <field name="02_tgt" string="Feb Tgt" sum="Feb Target" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+                <field name="feb_ach" sum="Feb Ach" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+                <field name="feb_sur_def" string="Feb Sur/Def" sum="Feb Sur/Def" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+                <field name="feb_pct" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+
+                <field name="03_tgt" string="Mar Tgt" sum="Mar Target" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+                <field name="mar_ach" sum="Mar Ach" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+                <field name="mar_sur_def" string="Mar Sur/Def" sum="Mar Sur/Def" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+                <field name="mar_pct" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+
+                <field name="q4_tgt" sum="Q4 Target" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+                <field name="q4_ach" sum="Q4 Ach" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+                <field name="q4_sur_def" string="Q4 Sur/Def" sum="Q4 Sur/Def" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+                <field name="q4_pct" column_invisible="context.get('show_q4') != True and (context.get('show_q1') or context.get('show_q2') or context.get('show_q3'))"/>
+
+                <!-- ================= FY TOTAL ================= -->
+                <field name="fy_tgt" string="FY Tgt" sum="FY Target" column_invisible="context.get('show_q1') or context.get('show_q2') or context.get('show_q3') or context.get('show_q4')"/>
+                <field name="fy_ach" string="FY Ach" sum="FY Achievement" column_invisible="context.get('show_q1') or context.get('show_q2') or context.get('show_q3') or context.get('show_q4')"/>
+                <field name="fy_sur_def" string="FY Sur/Def" sum="FY Sur/Def" column_invisible="context.get('show_q1') or context.get('show_q2') or context.get('show_q3') or context.get('show_q4')"/>
+                <field name="fy_pct" string="FY Pct" column_invisible="context.get('show_q1') or context.get('show_q2') or context.get('show_q3') or context.get('show_q4')"/>
+
+            </list>
+        </field>
+    </record>
+
+    <record id="view_mr_target_achievement_quarterly_search" model="ir.ui.view">
+        <field name="name">mr.target.achievement.quarterly.search</field>
+        <field name="model">mr.target.achievement.quarterly.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="territory_id"/>
+                <field name="mr_id"/>
+                <field name="category_id"/>
+                <field name="fiscal_year"/>
+        
+                <separator/>
+                <!-- Quarter Filters -->
+                <filter string="Q1"
+                        name="q1"
+                        context="{'show_q1': True}"/>
+
+                <filter string="Q2"
+                        name="q2"
+                        context="{'show_q2': True}"/>
+
+                <filter string="Q3"
+                        name="q3"
+                        context="{'show_q3': True}"/>
+
+                <filter string="Q4"
+                        name="q4"
+                        context="{'show_q4': True}"/>
+
+                <filter string="FY"
+                        name="fy"
+                        context="{'show_fy': True}"/>
+
+                <separator/>
+                <filter string="Current Year"
+                    name="current_year"
+                    domain="[('is_current_fy', '=', True)]"/>
+
+            </search>
+        </field>
+    </record>
+
+    <record id="view_mr_target_audit_log_tree" model="ir.ui.view">
+        <field name="name">mr.target.audit.log.tree</field>
+        <field name="model">mr.target.audit.log</field>
+        <field name="arch" type="xml">
+            <list create="0" delete="0">
+                <field name="change_date"/>
+                <field name="user_id"/>
+                <field name="territory_id"/>
+                <field name="mr_id"/>
+                <field name="category_id"/>
+                <field name="fiscal_year"/>
+                <field name="field_name"/>
+                <field name="old_value"/>
+                <field name="new_value"/>
+            </list>
+        </field>
+    </record>
+
+
+
+    <!-- Action -->
+    <record id="action_mr_target_achievement_quarterly_report" model="ir.actions.act_window">
+        <field name="name">Quarterly Target Achievement Report</field>
+        <field name="res_model">mr.target.achievement.quarterly.report</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_mr_target_achievement_quarterly_tree"/>
+        <field name="context">
+            {
+                
+                'search_default_current_year': 1
+            }
+        </field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem id="menu_target_achievement" name="Target Vs Achievement" parent="ubik_app.menu_report_root"/>
+    <menuitem
+        id="menu_mr_target_achievement_quarterly_report"
+        name="Quarterly Target Achievement Report"
+        parent="ubik_app.menu_target_achievement"
+        action="action_mr_target_achievement_quarterly_report"/>
+
+</odoo>

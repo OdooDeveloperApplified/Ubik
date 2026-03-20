@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_mr_doctor_sales_report_tree" model="ir.ui.view">
+        <field name="name">mr.doctor.sales.report.tree</field>
+        <field name="model">mr.doctor.sales.report</field>
+        <field name="arch" type="xml">
+            <list string="Doctor Wise Sales Report" default_order="amount desc" create="0">
+                <field name="doc_unique_id"/>
+                <field name="doctor_id"/>
+                <field name="mr_id"/>
+                <field name="territory_id" optional="1"/>
+                <field name="category_id"/>
+                <field name="product_id"/>
+                <field name="rate_type"/>
+                <field name="price_unit"/>
+                <field name="apr_qty"/>
+                <field name="apr_amt"/>
+                <field name="may_qty"/>
+                <field name="may_amt"/>
+                <field name="jun_qty"/>
+                <field name="jun_amt"/>
+                <field name="jul_qty"/>
+                <field name="jul_amt"/>
+                <field name="aug_qty"/>
+                <field name="aug_amt"/>
+                <field name="sep_qty"/>
+                <field name="sep_amt"/>
+                <field name="oct_qty"/>
+                <field name="oct_amt"/>
+                <field name="nov_qty"/>
+                <field name="nov_amt"/>
+                <field name="dec_qty"/>
+                <field name="dec_amt"/>
+                <field name="jan_qty"/>
+                <field name="jan_amt"/>
+                <field name="feb_qty"/>
+                <field name="feb_amt"/>
+                <field name="mar_qty"/>
+                <field name="mar_amt"/>
+                <field name="product_qty" sum="Total Qty"/>
+                <field name="amount" sum="Total Amount"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_doctorwise_sales_search" model="ir.ui.view">
+        <field name="name">doctor.sales.search</field>
+        <field name="model">mr.doctor.sales.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="year"/>
+
+                <filter string="Current Year"
+                    name="current_year"
+                    domain="[('is_current_fy', '=', True)]"/>
+
+            </search>
+        </field>
+    </record>
+
+    <record id="action_mr_doctor_sales_report" model="ir.actions.act_window">
+        <field name="name">Doctor Wise Sales Report</field>
+        <field name="res_model">mr.doctor.sales.report</field>
+        <field name="view_mode">list</field>
+        <field name="context">
+            {'group_by': ['doctor_id'],
+             'search_default_current_year': 1
+            }
+        </field>
+    </record>
+
+    <menuitem id="menu_report_root" name="Reports" parent="ubik_app.menu_ubik_app" sequence="20"/>
+    <menuitem id="menu_report_doctor" name="Doctorwise" parent="ubik_app.menu_report_root"/>
+    <menuitem id="menu_mr_doctor_sales_report" name="Doctor Wise Sales" parent="ubik_app.menu_report_doctor" action="action_mr_doctor_sales_report" sequence="10"/>
+</odoo>

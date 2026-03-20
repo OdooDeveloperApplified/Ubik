@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_mr_doctor_final_sales_report_tree" model="ir.ui.view">
+        <field name="name">mr.doctor.final.sales.report.tree</field>
+        <field name="model">mr.doctor.final.sales.report</field>
+        <field name="arch" type="xml">
+            <list create="0"  editable="bottom">
+                <field name="territory_id"/>
+                <field name="doctor_id"/>
+
+                <field name="prev_avg"/>
+                <field name="curr_avg"/>
+
+                <field name="total_diff"/>
+
+                <field name="curr_month_total"/>
+                <field name="nov_vs_avg_diff"/>
+
+                <field name="remarks"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_final_sales_search" model="ir.ui.view">
+        <field name="name">final.sales.search</field>
+        <field name="model">mr.doctor.final.sales.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="territory_id"/>
+                <field name="fy_year"/>
+    
+                <filter string="Current Year"
+                    name="current_year"
+                    domain="[('is_current_fy', '=', True)]"/>
+
+            </search>
+        </field>
+    </record>
+
+    <record id="action_mr_doctor_final_sales_report" model="ir.actions.act_window">
+        <field name="name">Final Sales Report</field>
+        <field name="res_model">mr.doctor.final.sales.report</field>
+        <field name="view_mode">list</field>
+        <field name="context">
+            {
+                
+                'search_default_current_year': 1
+            }
+        </field>
+    </record>
+
+    <menuitem id="menu_mr_doctor_final_sales_report" name="Final Sales Report" parent="ubik_app.menu_report_doctor" action="action_mr_doctor_final_sales_report" sequence="40"/>
+</odoo>

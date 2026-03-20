@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_mr_doctor_visit_form" model="ir.ui.view">
+        <field name="name">mr.doctor.visit.form</field>
+        <field name="model">mr.doctor</field>
+        <field name="arch" type="xml">
+            <form>
+                <!-- HEADER BUTTONS -->
+                <header>
+
+                    <!-- Submit Button (Visible to MR only in Draft) -->
+                    <button name="action_submit_to_asm"
+                            string="Submit to Manager"
+                            type="object"
+                            class="btn-primary"
+                            groups="ubik_app.group_sales_user,base.group_system"
+                            invisible="asm_state != 'draft'"/>
+
+                    <!-- Verify Button (Visible to ASM only when Pending) -->
+                    <button name="action_verify_by_asm"
+                            string="Verify"
+                            type="object"
+                            class="btn-success"
+                            groups="ubik_app.group_sales_manager,base.group_system"
+                            invisible="asm_state != 'submitted' or manager_id != uid"/>
+
+                    <!-- Reject Button (Visible to ASM only when Pending) -->
+                    <button name="%(action_mr_doctor_reject_wizard)d"
+                            string="Reject"
+                            type="action"
+                            class="btn-danger"
+                            groups="ubik_app.group_sales_manager, base.group_system"
+                            invisible="asm_state != 'submitted' or manager_id != uid"/>
+
+                    <!-- Unlock Button for Admin -->
+                    <!-- <button name="action_unlock_record"
+                        string="Unlock for Edit"
+                        type="object"
+                        class="btn-warning"
+                        groups="base.group_system"
+                        invisible="not record_save or unlock_for_edit"/> -->
+                    
+                     <!-- Lock button for Admin -->
+                    <!-- <button name="action_lock_after_edit"
+                        string="Lock"
+                        type="object"
+                        class="btn-danger"
+                        groups="base.group_system"
+                        invisible="not unlock_for_edit"/> -->
+        
+                    <!-- Statusbar -->
+                    <field name="asm_state"
+                        widget="statusbar"
+                        statusbar_visible="draft,submitted,verified,rejected"/>
+                </header>
+                <sheet>
+                   <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="mr_id"/>
+                            <field name="job_id"/>
+                            <field name="manager_id"/>
+                            <!-- <field name="territory_id"/> old code -->
+                            <!-- New code for multi territories for MR starts -->
+                            <field name="territory_id" domain="[('id', 'in', allowed_territory_ids)]"/>
+                            <!-- New code for multi territories for MR ends -->
+                            <field name="doctor_id"/>
+                            <field name="doc_unique_id" force_save="1"/>
+                            
+                        </group>
+                        <group>
+                            <field name="create_date"/>
+                            <field name="record_save" invisible="1"/>
+                            <field name="unlock_for_edit" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Sales Details">
+                            <field name="line_ids" context="{'default_product_qty': 1}">
+                                <list editable="bottom">
+                                    <field name="category_id"/>
+                                    <field name="product_id"/>
+                                    <field name="month"/>
+                                    <field name="rate_type"/>
+                                    <field name="price_unit"/>
+                                    <field name="discount_percent" readonly="1"/>
+                                    <field name="product_qty"/>
+                                    <field name="amount" readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+
+                <!-- Chatter -->
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_mr_doctor_visit_tree" model="ir.ui.view">
+        <field name="name">mr.doctor.visit.tree</field>
+        <field name="model">mr.doctor</field>
+        <field name="arch" type="xml">
+            <list string="MR Doctor Visits">
+                <field name="name"/>
+                <field name="mr_id"/>
+                <field name="job_id"/>
+                <field name="doctor_id"/>
+                <field name="territory_id"/>
+                <field name="create_date"/>
+                <field name="asm_state" widget="badge" decoration-success="asm_state == 'verified'" decoration-danger="asm_state == 'rejected'"  decoration-warning="asm_state == 'submitted'"/>
+                <field name="rejection_reason"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_mr_doctor_visit" model="ir.actions.act_window">
+        <field name="name">MR Doctor Visit</field>
+        <field name="res_model">mr.doctor</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first MR Doctor Visit
+            </p>
+        </field>
+    </record>
+
+     <!-- Code to show device_token field in users form -->
+    <record id="territory_specific_product_view" model="ir.ui.view">
+        <field name="name">territory.specific.product.view</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+
+            <!-- Add inside Preferences tab -->
+            <xpath expr="//field[@name='categ_id']" position="before">
+                <field name="is_territory_specific_product"/>
+                <field name="allowed_territory_ids"
+                    widget="many2many_tags"
+                    invisible="not is_territory_specific_product"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="ir_cron_auto_lock_mr_doctor" model="ir.cron">
+        <field name="name">Auto Lock Past Month MR Doctor</field>
+        <field name="model_id" ref="model_mr_doctor"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_auto_lock_past_month_records()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+       
+        <field name="active">True</field>
+    </record>
+    
+    <menuitem id="menu_ubik_app" name="Ubik App"/>
+    <menuitem id="menu_mr_doctor_visit_root" name="MR Doctor Visit" parent="ubik_app.menu_ubik_app" sequence="10"/>
+    <menuitem id="menu_mr_doctor_visit_records" name="Visit Record Details" parent="ubik_app.menu_mr_doctor_visit_root" action="action_mr_doctor_visit" sequence="10"/>
+
+</odoo>

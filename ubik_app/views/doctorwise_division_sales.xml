@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_doctor_division_sales_report_tree" model="ir.ui.view">
+        <field name="name">doctor.division.sales.report.tree</field>
+        <field name="model">doctor.division.sales.report</field>
+        <field name="arch" type="xml">
+            <list string="Doctor Wise Sales Report" default_order="amount desc" create="0">
+
+                <!-- Doctor Identification -->
+                <field name="doc_unique_id"/>
+                <field name="doctor_id"/>
+                <field name="territory_id"/>
+                <field name="category_id"/>
+                <field name="mr_id"/>
+
+                <!-- Monthly Amounts -->
+                <field name="apr_amt" sum="April"/>
+                <field name="may_amt" sum="May"/>
+                <field name="jun_amt" sum="June"/>
+                <field name="jul_amt" sum="July"/>
+                <field name="aug_amt" sum="August"/>
+                <field name="sep_amt" sum="September"/>
+                <field name="oct_amt" sum="October"/>
+                <field name="nov_amt" sum="November"/>
+                <field name="dec_amt" sum="December"/>
+                <field name="jan_amt" sum="January"/>
+                <field name="feb_amt" sum="February"/>
+                <field name="mar_amt" sum="March"/>
+
+                <!-- Grand Total -->
+                <field name="amount" sum="Grand Total"/>
+
+            </list>
+        </field>
+    </record>
+     <record id="view_doctorwise_division_sales_search" model="ir.ui.view">
+        <field name="name">doctor.division.sales.search</field>
+        <field name="model">doctor.division.sales.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="year"/>
+
+                <filter string="Current Year"
+                    name="current_year"
+                    domain="[('is_current_fy', '=', True)]"/>
+
+            </search>
+        </field>
+    </record>
+
+    <record id="action_doctor_division_sales_report" model="ir.actions.act_window">
+        <field name="name">Doctor Wise Division Sales Report</field>
+        <field name="res_model">doctor.division.sales.report</field>
+        <field name="view_mode">list</field>
+        <field name="context">
+            {
+                'group_by': ['doctor_id'],
+                'search_default_current_year': 1
+            }
+        </field>
+    </record>
+    <menuitem id="menu_doctor_division_sales_report" name="Doctor Wise Division Sales" parent="ubik_app.menu_report_doctor" action="action_doctor_division_sales_report" sequence="20"/>
+</odoo>

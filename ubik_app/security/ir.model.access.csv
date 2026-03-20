@@ -1,0 +1,17 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_mr_doctor,access.mr.doctor,ubik_app.model_mr_doctor,base.group_user,1,1,1,1
+access_mr_doctor_line,access.mr.doctor.line,ubik_app.model_mr_doctor_line,base.group_user,1,1,1,1
+access_mr_doctor_sales_report,access.mr.doctor.sales.report,ubik_app.model_mr_doctor_sales_report,base.group_user,1,1,1,1
+access_doctor_division_sales_report,access.doctor.division.sales.report,ubik_app.model_doctor_division_sales_report,base.group_user,1,1,1,1
+access_mr_doctor_avg_sales_report,access.mr.doctor.avg.sales.report,ubik_app.model_mr_doctor_avg_sales_report,base.group_user,1,1,1,1
+access_mr_product_fy_comparison,access.mr.product.fy.comparison,ubik_app.model_mr_product_fy_comparison,base.group_user,1,1,1,1
+access_mr_doctor_final_sales_report,access.mr.doctor.final.sales.report,ubik_app.model_mr_doctor_final_sales_report,base.group_user,1,1,1,1
+access_mr_doctor_final_sales_remarks,access.mr.doctor.final.sales.remarks,ubik_app.model_mr_doctor_final_sales_remarks,base.group_user,1,1,1,1
+access_mr_territory_target,access.mr.territory.target,ubik_app.model_mr_territory_target,base.group_user,1,1,1,1
+access_mr_quarterly_target,access.mr.quarterly.target,ubik_app.model_mr_quarterly_target,base.group_user,1,1,1,1
+access_mr_target_achievement_yearly_target,access.mr.target.achievement.yearly.target,ubik_app.model_mr_target_achievement_yearly_target,base.group_user,1,1,1,1
+access_mr_target_achievement_quarterly_report,access.mr.target.achievement.quarterly.report,ubik_app.model_mr_target_achievement_quarterly_report,base.group_user,1,1,1,1
+access_mr_target_audit_log,access.mr.target.audit.log,ubik_app.model_mr_target_audit_log,base.group_user,1,1,1,1
+access_mr_doctor_reject_wizard,access.mr.doctor.reject.wizard,ubik_app.model_mr_doctor_reject_wizard,base.group_user,1,1,1,1
+access_mr_doctor_bulk_lock_wizard,access.mr.doctor.bulk.lock.wizard,ubik_app.model_mr_doctor_bulk_lock_wizard,base.group_user,1,1,1,1
+

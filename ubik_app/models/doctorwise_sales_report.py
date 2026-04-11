@@ -46,7 +46,7 @@ class MrDoctorSalesReport(models.Model):
     doc_unique_id = fields.Char(string="Doctor ID", readonly=True)
     territory_id = fields.Many2one('territory.name', string="Territory", readonly=True)
     category_id = fields.Many2one('product.category', string="Division", readonly=True)
-    product_id = fields.Many2one('product.product', string="Product", readonly=True)
+    product_id = fields.Many2one('product.template', string="Product", readonly=True)
     rate_type = fields.Selection([
         ('ptr_rate', 'PTR Rate'),
         ('custom_rate', 'Custom Rate'),

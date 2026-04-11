@@ -2,6 +2,7 @@ from odoo import fields, models, api, _
 from odoo.exceptions import UserError
 from datetime import datetime,timedelta
 from dateutil.relativedelta import relativedelta
+from markupsafe import Markup
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -21,13 +22,13 @@ class MrDoctor(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('mr.doctor') or 'New'
         return super(MrDoctor, self).create(vals)
     
-    mr_id = fields.Many2one('res.users', string="User", tracking=True)
-    doctor_id = fields.Many2one('res.partner', string="Doctor", tracking=True,  domain="[('is_doctor','=',True), ('territory_id','=', territory_id)]")
-    doc_unique_id = fields.Char(string="Doctor ID", readonly=True,tracking=True)
+    mr_id = fields.Many2one('res.users', string="User")
+    doctor_id = fields.Many2one('res.partner', string="Doctor",domain="[('is_doctor','=',True), ('territory_id','=', territory_id)]")
+    doc_unique_id = fields.Char(string="Doctor ID", readonly=True)
     line_ids = fields.One2many('mr.doctor.line','mr_doctor_id', string="Sales Details")
 
     # New code to allow multi territories for MR and restrict doctor selection based on those territories. Territory assigned to MR is fetched from Employee module based on the logged in user.
-    territory_id = fields.Many2one('territory.name', string="Territory", tracking=True)
+    territory_id = fields.Many2one('territory.name', string="Territory")
     allowed_territory_ids = fields.Many2many('territory.name',compute='_compute_allowed_territories',store=False)
     # New code to allow multi territories for MR and restrict doctor selection ends here
 
@@ -57,7 +58,7 @@ class MrDoctor(models.Model):
     
     ################## ASM Verification flow starts ################################
 
-    job_id = fields.Many2one('hr.job',string="Job Position",compute="_compute_job_id",store=True,readonly=True,tracking=True)
+    job_id = fields.Many2one('hr.job',string="Job Position",compute="_compute_job_id",store=True,readonly=True)
 
     @api.depends('mr_id')
     def _compute_job_id(self):
@@ -77,10 +78,10 @@ class MrDoctor(models.Model):
         ('submitted', 'Submitted'),
         ('verified', 'Verified'),
         ('rejected', 'Rejected'),
-    ], default='draft', string="Status", tracking=True)
+    ], default='draft', string="Status")
 
 
-    manager_id = fields.Many2one('res.users',string="Manager",compute="_compute_manager_id",store=True,tracking=True)
+    manager_id = fields.Many2one('res.users',string="Manager",compute="_compute_manager_id",store=True)
 
     @api.depends('mr_id')
     def _compute_manager_id(self):
@@ -120,7 +121,7 @@ class MrDoctor(models.Model):
                 raise UserError(_("Only assigned Manager can reject this record."))
             rec.asm_state = 'rejected'
     
-    rejection_reason = fields.Text(string="Rejection Reason", tracking=True)
+    rejection_reason = fields.Text(string="Rejection Reason")
 
     record_save = fields.Boolean(string="Record Save", compute="_compute_record_save",store=True)
 
@@ -257,10 +258,32 @@ class MrDoctor(models.Model):
 
         return super().write(vals)
 
+    # Currently below code is in live where the records get locked as soon as the month changes
+    # def _cron_auto_lock_past_month_records(self):
+    #     today = datetime.today()
+    #     current_year = today.year
+    #     current_month = today.month
+
+    #     records = self.search([
+    #         ('unlock_for_edit', '=', False)
+    #     ])
+
+    #     for rec in records:
+    #         if not rec.create_date:
+    #             continue
+
+    #         create_year = rec.create_date.year
+    #         create_month = rec.create_date.month
+
+    #         # If record is from past month (or past year)
+    #         if (create_year < current_year) or \
+    #         (create_year == current_year and create_month < current_month):
+
+    #             rec.record_save = True
+
+    # Not uploaded in live yet - This version of code will lock the records on 11th of next month instead of 1st, giving some buffer time to the users to unlock the records if needed
     def _cron_auto_lock_past_month_records(self):
         today = datetime.today()
-        current_year = today.year
-        current_month = today.month
 
         records = self.search([
             ('unlock_for_edit', '=', False)
@@ -270,13 +293,11 @@ class MrDoctor(models.Model):
             if not rec.create_date:
                 continue
 
-            create_year = rec.create_date.year
-            create_month = rec.create_date.month
+            # Get 11th of NEXT month of record creation
+            lock_date = (rec.create_date + relativedelta(months=1)).replace(day=11)
 
-            # If record is from past month (or past year)
-            if (create_year < current_year) or \
-            (create_year == current_year and create_month < current_month):
-
+            # If today is on or after lock date → lock it
+            if today >= lock_date:
                 rec.record_save = True
     
     class MrDoctorRejectWizard(models.TransientModel):
@@ -312,21 +333,124 @@ class MrDoctor(models.Model):
 class MrDoctorLine(models.Model):
     _name = 'mr.doctor.line'
     _description = 'MR Doctor Sales Line'
-    _inherit = ['mail.thread']
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     mr_doctor_id = fields.Many2one('mr.doctor',string="MR Doctor")
 
     allowed_category_ids = fields.Many2many('product.category',compute='_compute_allowed_categories',store=False)
 
-    category_id = fields.Many2one('product.category',string="Division",tracking=True,domain="[('id', 'in', allowed_category_ids)]")
+    category_id = fields.Many2one('product.category',string="Division",domain="[('id', 'in', allowed_category_ids)]")
 
-    product_id = fields.Many2one('product.template',string="Product",domain="[('sale_ok','=',True), ('categ_id','=',category_id), ('id','in', allowed_product_ids)]", tracking=True)
+    product_id = fields.Many2one('product.template',string="Product",domain="[('sale_ok','=',True), ('categ_id','=',category_id), ('id','in', allowed_product_ids)]")
 
     allowed_product_ids = fields.Many2many(
         'product.template', 
         compute='_compute_allowed_products', 
         store=False
     )
+
+    # Code to post message in chatter when a line is added with details of the added line (product, quantity, unit price)
+    def create(self, vals):
+        record = super().create(vals)
+
+        if record.mr_doctor_id:
+            message = Markup(
+                "New Line Added:<br/>"
+                f"Product: {record.product_id.display_name if record.product_id else ''}<br/>"
+                f"Quantity: {record.product_qty}<br/>"
+                f"Unit Price: {record.price_unit}"
+            )
+
+            # Create message without automatic follower subscription
+            msg_values = {
+                'body': message,
+                'message_type': 'comment',
+                'subtype_id': self.env.ref('mail.mt_note').id,
+                'author_id': self.env.user.partner_id.id,
+                'model': 'mr.doctor',
+                'res_id': record.mr_doctor_id.id,
+            }
+            
+            try:
+                self.env['mail.message'].sudo().create(msg_values)
+            except:
+                # If that fails, try without sudo
+                self.env['mail.message'].create(msg_values)
+
+        return record
+
+    # Code to post message in chatter when a line is updated with details of the updated fields (product, quantity, unit price)
+    def write(self, vals):
+        tracked_fields = ['category_id','product_id', 'price_unit', 'product_qty', 'rate_type', 'custom_rate']
+
+        field_labels = {
+            'category_id': 'Division',
+            'product_id': 'Product',
+            'price_unit': 'Unit Price',
+            'product_qty': 'Quantity',
+            'rate_type': 'Rate Type',
+            'custom_rate': 'Custom Rate',
+        }
+
+        # Capture OLD values BEFORE write
+        old_values_map = {}
+        for line in self:
+            old_values_map[line.id] = {
+                field: line[field] for field in tracked_fields
+            }
+
+        res = super().write(vals)
+
+        for line in self:
+            changes = []
+            old_values = old_values_map.get(line.id, {})
+
+            for field in tracked_fields:
+                if field in vals:
+                    old = old_values.get(field)
+                    new = line[field]
+
+                    # Handle Many2one fields
+                    if hasattr(old, 'display_name'):
+                        old = old.display_name
+                    if hasattr(new, 'display_name'):
+                        new = new.display_name
+
+                    if old != new:
+                        label = field_labels.get(field, field)
+                        changes.append(f"{label}: {old} → {new}")
+
+            if changes and line.mr_doctor_id:
+                message = Markup(
+                    "Line Updated:<br/>" + "<br/>".join(changes)
+                )
+
+                line.mr_doctor_id.message_post(
+                    body=message,
+                    message_type="comment",
+                    subtype_xmlid="mail.mt_note",
+                )
+
+        return res
+    
+    # Code to post message in chatter when a line is deleted with details of the deleted line (product, quantity, unit price)
+    def unlink(self):
+        for line in self:
+            if line.mr_doctor_id:
+                message = Markup(
+                    "Line Removed:<br/>"
+                    f"Product: {line.product_id.display_name if line.product_id else ''}<br/>"
+                    f"Quantity: {line.product_qty}"
+                )
+
+                line.mr_doctor_id.message_post(
+                    body=message,
+                    message_type="comment",
+                    subtype_xmlid="mail.mt_note",
+                )
+
+        return super().unlink()
+    
     # Code to populate the categories (Division) assigned to MR in Employee Module
     @api.depends('mr_doctor_id.mr_id')
     def _compute_allowed_categories(self):
@@ -415,14 +539,14 @@ class MrDoctorLine(models.Model):
         return selection
     
     month = fields.Selection(selection=_get_month_year_selection,string="Month",default=lambda self: datetime.today().strftime('%Y-%m'),
-    required=True, tracking=True)
+    required=True)
 
     rate_type = fields.Selection([
         ('ptr_rate', 'PTR Rate'),
         ('custom_rate', 'Custom Rate'),
-    ], tracking=True)
-    ptr_rate = fields.Float(string='PTR Rate', tracking=True)
-    custom_rate = fields.Float(string='Custom Rate', tracking=True)
+    ])
+    ptr_rate = fields.Float(string='PTR Rate')
+    custom_rate = fields.Float(string='Custom Rate')
 
     # Code to add functionality to rate type (IF rate type=ptr rate, unit price = list price, 
     # if rate type=custom rate, unit price=0.0 and user can add desired price but less than list price)
@@ -435,9 +559,9 @@ class MrDoctorLine(models.Model):
             elif line.rate_type == 'ptr_rate' and line.product_id:
                 line.price_unit = line.product_id.list_price
 
-    price_unit = fields.Float(string="Unit Price", tracking=True)
-    product_qty = fields.Float(string="Quantity", default='1.0', tracking=True)
-    amount = fields.Float(string="Amount",compute="_compute_amount",store=True, tracking=True)
+    price_unit = fields.Float(string="Unit Price")
+    product_qty = fields.Float(string="Quantity", default='1.0')
+    amount = fields.Float(string="Amount",compute="_compute_amount",store=True)
     
     # Code to calculate amount
     @api.depends('price_unit', 'product_qty')
@@ -446,7 +570,7 @@ class MrDoctorLine(models.Model):
             line.amount = line.price_unit * line.product_qty
 
     ############ New ASM workflow code to add discount % column under sales details starts ##############
-    discount_percent = fields.Float(string="Discount %",compute="_compute_discount_percent", store=True, tracking=True)
+    discount_percent = fields.Float(string="Discount %",compute="_compute_discount_percent", store=True)
     @api.depends('rate_type', 'price_unit', 'product_id')
     def _compute_discount_percent(self):
         for line in self:

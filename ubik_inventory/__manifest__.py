@@ -10,6 +10,7 @@
         'data/data.xml',
         'views/stock_picking_views.xml',
         'views/inspection_report_views.xml',
+        'reports/export_packaging_report.xml',
         
 
     ],

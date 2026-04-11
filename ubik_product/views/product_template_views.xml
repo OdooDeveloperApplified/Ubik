@@ -17,6 +17,13 @@
                 <field name="group_id"/>
                 <!-- <field name="shelf_life"/> -->
             </xpath>
+
+            <!-- New code to add export workflow related field:starts -->
+            <xpath expr="//field[@name='l10n_in_hsn_code']" position="after">
+                <field name="dbk_code"/>
+            </xpath>
+            <!-- New code to add export workflow related field:ends -->
+            
             <xpath expr="//field[@name='type']" position="after">
                 <label for="pack" class="oe_inline"/>
                 <div class="o_row w-100">
@@ -38,6 +45,16 @@
                     <field name="inspection_line_ids" widget="statinfo"/>
                 </button>
             </xpath>
+
+            <!-- Export Shipper Info code:starts -->
+            <xpath expr="//sheet/notebook/page[@name='general_information']/group" position="after">
+                <group string="Export Shipper Info">
+                    <field name="net_weight_per_box"/>
+                    <field name="gross_weight_per_box"/>
+                    <field name="box_dimensions"/>
+                </group>
+            </xpath>
+            <!-- Export Shipper Info code:ends -->
         </field>
     </record>
 

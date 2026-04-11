@@ -1291,3 +1291,95 @@ class MRDoctorDeleteAPI(http.Controller):
                 "message": str(e)
             }), content_type='application/json')
 
+class ManagerDashboardVisitsAPI(http.Controller):
+
+    @http.route('/manager_dashboard_visits', type='http', auth='public', cors='*', methods=['POST'], csrf=False)
+    def get_manager_dashboard_visits(self, **kwargs):
+
+        try:
+            # Validate token
+            user, error_response = validate_api_request(request, kwargs)
+            if error_response:
+                return error_response
+
+            # Check manager access
+            # if not user.has_group('ubik_app.group_sales_manager'):
+            #     return Response(json.dumps({
+            #         "success": False,
+            #         "message": "You are not authorized to view this data"
+            #     }), content_type='application/json')
+
+            # Get manager employee
+            manager_employee = request.env['hr.employee'].sudo().search(
+                [('user_id', '=', user.id)], limit=1)
+
+            if not manager_employee:
+                return Response(json.dumps({
+                    "success": False,
+                    "message": "Manager employee record not found"
+                }), content_type='application/json')
+
+            # Get MRs under this manager
+            mr_employees = request.env['hr.employee'].sudo().search([
+                ('parent_id', '=', manager_employee.id),
+                ('user_id', '!=', False)
+            ])
+
+            mr_user_ids = mr_employees.mapped('user_id').ids
+
+            if not mr_user_ids:
+                return Response(json.dumps({
+                    "success": True,
+                    "submitted_count": 0,
+                    "processed_count": 0,
+                    "submitted_visits": [],
+                    "processed_visits": []
+                }), content_type='application/json')
+
+            # Fetch visits
+            visits = request.env['mr.doctor'].sudo().search([
+                ('mr_id', 'in', mr_user_ids)
+            ], order='create_date desc')
+
+            submitted_visits = []
+            processed_visits = []
+
+            for visit in visits:
+
+                visit_dict = {
+                    "mr_doctor_id": visit.id,
+                    "reference": visit.name,
+                    "mr_id": visit.mr_id.id if visit.mr_id else None,
+                    "mr_name": visit.mr_id.name if visit.mr_id else None,
+                    "doctor_name": visit.doctor_id.name if visit.doctor_id else None,
+                    "territory_name": visit.territory_id.name if visit.territory_id else None,
+                    "status": visit.asm_state,
+                    "create_date": visit.create_date.strftime('%Y-%m-%d %H:%M:%S') if visit.create_date else None,
+                }
+
+                # Add rejection reason if rejected
+                if visit.asm_state == 'rejected':
+                    visit_dict['rejection_reason'] = visit.rejection_reason or ""
+
+                # Categorize records
+                if visit.asm_state == 'submitted':
+                    submitted_visits.append(visit_dict)
+
+                elif visit.asm_state in ['verified', 'rejected']:
+                    processed_visits.append(visit_dict)
+
+            return Response(json.dumps({
+                "success": True,
+                "submitted_count": len(submitted_visits),
+                "processed_count": len(processed_visits),
+                "submitted_visits": submitted_visits,
+                "processed_visits": processed_visits
+            }), content_type='application/json')
+
+        except Exception as e:
+            _logger.exception("Error in /manager_dashboard_visits API")
+            return Response(json.dumps({
+                "success": False,
+                "message": str(e)
+            }), content_type='application/json')
+

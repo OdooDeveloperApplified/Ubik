@@ -11,6 +11,21 @@
             <xpath expr="//div[@class='oe_button_box']" position="inside">
                 <button class="oe_stat_button" name="action_view_inspection_reports" type="object" icon="fa-check-circle" string="Inspection Report" invisible="not has_inspection_report"/>
             </xpath> 
+            <!-- Export workflow Add new tab inside notebook: starts -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Documents">
+
+                    <group>
+                        <field name="documents" widget="many2many_binary"/>
+                    </group>
+
+                    <group>
+                        <field name="customer_document" widget="many2one_binary"/>
+                    </group>
+
+                </page>
+            </xpath>
+            <!-- Export workflow Add new tab inside notebook: ends -->
         </field>
     </record>
 </odoo>

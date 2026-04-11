@@ -43,6 +43,14 @@ class ProductTemplate(models.Model):
 
             # Replace existing lines
             product.vendor_criteria_line_ids = [(5, 0, 0)] + new_lines
+
+    ############ NEW FIELDS FOR EXPORTSHIPPER PACKAGING INFORMATION: starts ############
+    net_weight_per_box = fields.Float(string="Net Weight (kg/box)")
+    gross_weight_per_box = fields.Float(string="Gross Weight (kg/box)")
+    box_dimensions = fields.Char(string="Dimensions (mm)")
+    dbk_code = fields.Char(string="DBK Code")
+    ############ NEW FIELDS FOR EXPORT SHIPPER PACKAGING INFORMATION: ends ############
+
     
     #Product Master Specification fields
 

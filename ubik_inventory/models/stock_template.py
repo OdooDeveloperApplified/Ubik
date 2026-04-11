@@ -1,5 +1,6 @@
 from odoo import api, fields, models, _
 import base64
+from num2words import num2words
 from odoo.exceptions import ValidationError
 import logging
 _logger = logging.getLogger(__name__)
@@ -426,6 +427,39 @@ class InspectionReport(models.Model):
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
+    ############ Code for export workflow: starts ############
+    def amount_to_words_kg(self, amount):
+        if not amount:
+            return ''
+
+        # Ensure it's string (important)
+        amount_str = str(amount)
+
+        if '.' in amount_str:
+            kg_part, decimal_part = amount_str.split('.')
+            kg = int(kg_part)
+
+            grams = int(decimal_part) if decimal_part else 0
+        else:
+            kg = int(amount_str)
+            grams = 0
+
+        kg_words = num2words(kg, lang='en').title()
+
+        if grams:
+            gram_words = num2words(grams, lang='en').title()
+            return f"{kg_words} Kilos and {gram_words} Grams"
+        else:
+            return f"{kg_words} Kilos"
+        
+    documents = fields.Many2many('ir.attachment', 'stock_picking_doc_attach_rel',
+        'doc_id', 'attach_id', string="Documents(Multiple)", copy=False,
+        help='You can attach the copy of your document')
+    customer_document = fields.Many2one('ir.attachment',string="Document (Individual)",copy=False,
+        help='Attach a single document')
+   
+    ########### Code for export workflow: ends ############
+    
     has_inspection_report = fields.Boolean(
         string="Has Inspection Report",
         compute="_compute_has_inspection_report",

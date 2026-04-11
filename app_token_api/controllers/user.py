@@ -71,7 +71,7 @@ class UserController(http.Controller):
             if not employee.job_id or employee.job_id.name not in allowed_roles:
                 return Response(json.dumps({
                     "success": False,
-                    "message": "User role not allowed to generate API token"
+                    "message": "Access denied. Your account is not assigned to the required roles for login."
                 }), content_type='application/json')
             
             if user.device_token != device_token:

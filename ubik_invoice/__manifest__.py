@@ -1,16 +1,15 @@
 {
-    'name': 'Ubik Sales',
+    'name': 'Ubik Invoice',
     'version': '18.0.1.0',
     'author': 'Applified',
     'website': 'https://www.applified.in',
     'summary': 'Ubik By Applified',
-    'depends': ['base','hr','sale','stock','sale_stock','contacts'],
+    'depends': ['base','sale','stock','sale_stock','contacts','account'],
     'data': [
         'security/ir.model.access.csv',
-        # 'views/stock_move_wizard_view.xml',
-        'views/sales_template_views.xml',
-        'views/free_scheme_wizard.xml',
-        'reports/ubik_proforma_invoice.xml',
+        'views/invoice_template_views.xml',
+        'reports/packaging_invoice_report_views.xml',
+        'reports/invoice_report_views.xml',
 
     ],
     'license': 'OPL-1',

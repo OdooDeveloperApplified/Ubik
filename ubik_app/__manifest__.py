@@ -4,7 +4,7 @@
     'category': '',
     'author': 'Applified contacts',
     'website': 'https://www.ubik.com',
-    'depends': ['base', 'mail','contacts','web','sale','stock'],
+    'depends': ['base', 'mail','contacts','web','sale','stock','hr','ubik_employee','ubik_contact'],
     'data': [
        
         'security/ir.model.access.csv',

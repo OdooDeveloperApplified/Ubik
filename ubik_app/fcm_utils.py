@@ -8,7 +8,7 @@ import google.auth.transport.requests
 _logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-JSON_FILE = os.path.join(BASE_DIR, 'ubik-connect-firebase-adminsdk-fbsvc-a1bdaa8fe2.json')
+JSON_FILE = os.path.join(BASE_DIR, 'ubik-connect-firebase-adminsdk-fbsvc-5ef6bb9ecf.json')
 
 SCOPES = ['https://www.googleapis.com/auth/firebase.messaging']
 PROJECT_ID = "ubik-connect"

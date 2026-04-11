@@ -9,9 +9,19 @@
             <xpath expr="//field[@name='order_line']//list//field[@name='product_uom_qty']" position="before">
                 <field name="pack" string="Pack" class="o_inline"/>
                 <field name="custom_uom_id" nolabel="1" class="o_inline"/>
+                <field name="hsn_code" string="HSN Code" class="o_inline"/>
+                <field name="dbk_code" string="DBK Code" class="o_inline" optional="1"/>
+                <field name="net_weight_per_box" string="Net Weight (kg/box)" class="o_inline" optional="1"/>
+                <field name="gross_weight_per_box" string="Gross Weight (kg/box)" class="o_inline" optional="1"/>
+                <field name="box_dimensions" string="Dimensions (mm)" class="o_inline" optional="1"/>
+                <field name="no_of_boxes" optional="1"/>
+                <field name="marks_nos" optional="1"/>
+                <field name="lot_id" optional="1"/>
+                <field name="expiration_date" optional="1"/>
+                <field name="best_before" string="Best Before (months)" optional="1"/>
             </xpath>
 
-            <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="after">
+            <!-- <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="after">
                 <button name="action_open_stock_move_smart"
                         string="Apply Lot"
                         type="object"
@@ -20,7 +30,7 @@
                         invisible="state not in ('sale')"
                         title="Open Stock Move"/>
                 <field name="stock_applied" widget="boolean_toggle" readonly="1" string="Stock Applied"/>
-            </xpath>
+            </xpath> -->
 
             <!-- Free scheme button -->
             <xpath expr="//button[@name='action_open_discount_wizard']" position="after">
@@ -30,6 +40,52 @@
                         class="btn-secondary"
                         icon="fa-plus"/>
             </xpath>
+
+            <xpath expr="//field[@name='sale_order_template_id']" position="before">
+                <field name="order_type" widget="radio"/>
+            </xpath>
+
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="Export Details" invisible="order_type != 'export'">
+                    <group>
+                        <group>
+                            <field name="consignee_type"/>
+                            <field name="consignee_id" invisible="consignee_type == 'same'"/>
+                            <field name="delivery"/>
+                            <field name="end_use_code"/>
+                            <field name="pre_carraige"/>
+                            <field name="vessel_number"/>
+                        </group>
+
+                        <group>
+                            <field name="place_of_receipt"/>
+                            <field name="country_of_origin"/>
+                            <field name="port_of_loading"/>
+                            <field name="port_of_discharge"/>
+                            <field name="final_destination"/>
+                            <field name="freight_charges"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+
         </field>
     </record> 
+
+    <!-- Code to add export type sale order field on delivery slip:starts -->
+    <record id="view_picking_form_inherit_boxes_marks" model="ir.ui.view">
+        <field name="name">stock.picking.form.boxes.marks</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Add under Operations or Extra Info -->
+            <xpath expr="//field[@name='move_ids_without_package']/list/field[@name='product_id']" position="before">
+                <field name="marks_nos" optional="1"/>
+                <field name="no_of_boxes" optional="1"/>
+            </xpath>
+
+        </field>
+    </record>
+    <!-- Code to add export type sale order field on delivery slip:ends -->
 </odoo>

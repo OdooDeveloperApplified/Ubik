@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Document Layout template -->
+    <template id="document_layout_invoice" >
+        <t t-call="web.basic_layout">
+            <!-- HEADER -->
+            <div>
+                <div class="o_boxed_header">
+                    <div class="row mb-2">
+                        <!-- RIGHT: Company Logo -->
+                        <div class="col-12 text-end mb-2">
+                            <img t-if="res_company.logo" t-att-src="image_data_uri(res_company.logo)" alt="Logo" style="max-height: 80px;"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inner content -->
+            <div>
+                <t t-out="0"/>
+            </div>
+
+            <!-- Footer -->
+            <div t-attf-class="footer o_company_#{res_company.id}_layout {{report_type != 'pdf' and 'mt-auto'}}">
+                <div class="o_footer_content d-flex border-top pt-2">
+                    <div class="flex-grow-1 me-2 text-start" t-field="res_company.report_footer"/>
+                    <div class="text-end text-muted">
+                        <div t-if="report_type == 'pdf' and display_name_in_footer" t-out="o.name">(document name)</div>
+                        <div t-if="report_type == 'pdf'">Page <span class="page"/> / <span class="topage"/></div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Report content section (Inner content) -->
+    <template id="ubik_invoice_report_view">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <!-- GET RELATED SALE ORDER - CORRECTED -->
+                <t t-set="sale_order" t-value="o.invoice_origin and o.invoice_origin.split(',')[0] and o.env['sale.order'].search([('name', '=', o.invoice_origin.split(',')[0])], limit=1) or False"/>
+                
+                <!-- Alternative method if above doesn't work -->
+                <t t-if="not sale_order">
+                    <t t-set="sale_order" t-value="o.env['sale.order'].search([('invoice_ids', 'in', o.id)], limit=1)"/>
+                </t>
+                
+                <!-- SAFETY CHECK -->
+                <t t-if="sale_order">
+                    <t t-call="ubik_invoice.document_layout_invoice">
+                        <div class="page" style="border: 1px solid black; border-bottom:none; margin: 0; font-size:12px;">
+                            <div style="width:100%;text-align:center; padding:4px;border-bottom:1px solid black; line-height:40px;">
+                                <h6 style="margin:0; line-height:normal;"><strong>INVOICE</strong></h6>
+                            </div>
+                            <div style="width:100%;text-align:center; padding:4px; border-bottom:1px solid black;line-height:40px;">
+                                <h6 style="margin:0; line-height:normal;"><strong>SUPPLY MEANT FOR EXPORT UNDER LUT WITHOUT PAYMENT OF IGST</strong></h6>
+                            </div>
+
+                            <!-- Exporter Details block -->
+                            <div class="row" style="width:100%;border-bottom:1px solid black;">
+                                <div class="col-8" style="padding:4px; border-right:1px solid black;">
+                                    <span><strong>Exporter</strong></span><br/>
+                                    <strong><t t-esc="sale_order.company_id.partner_id.name or ''"/></strong><br/>
+                                    <span>2007, 21st Floor, Space Odyssey,</span><br/>
+                                    <span>Nr. KKV Hall, 150 Feet Ring Road,</span><br/>
+                                    <t t-esc="sale_order.company_id.partner_id.city or ''"/> -  <t t-esc="sale_order.company_id.partner_id.zip or ''"/>
+                                    ( <t t-esc="sale_order.company_id.partner_id.state_id.name or ''"/>, <t t-esc="sale_order.company_id.partner_id.country_id.name or ''"/>)<br/>
+                                    <span>Contact: <t t-esc="sale_order.company_id.partner_id.mobile or ''"/></span><br/>
+                                </div>
+                                <div class="col-2" style="border-right:1px solid black;padding:4px;">
+                                    <strong>Invoice No.:</strong><br/>
+                                    <strong>Invoice Date:</strong><br/>
+                                    <strong>Delivery:</strong><br/>
+                                    <strong>Payment Terms:</strong>
+                                </div>
+                                <div class="col-2" style="padding:4px;">
+                                    <span t-esc="o.name or ''"/><br/>
+                                    <span t-esc="o.invoice_date" t-options='{"widget": "date"}'/><br/>
+                                    <span t-esc="sale_order.delivery or ''"/><br/>
+                                    <span t-esc="sale_order.payment_term_id.name or ''"/>
+                                </div>
+                            </div>
+
+                            <!-- Consignee Details block -->
+                            <div class="row">
+                                <div class="col-4" style="border-right:1px solid black; padding:4px;">
+                                    <strong>CONSIGNED TO :</strong><br/>
+                                    <t t-esc="sale_order.consignee_id.name or ''"/><br/>
+                                    <t t-esc="sale_order.consignee_id.street or ''"/><br/>
+                                    <t t-esc="sale_order.consignee_id.street2 or ''"/><br/>
+                                    <t t-esc="sale_order.consignee_id.city or ''"/><br/>
+                                    <t t-esc="sale_order.consignee_id.state_id.name or ''"/>-<t t-esc="sale_order.consignee_id.zip or ''"/><br/>
+                                </div>
+                                <div class="col-4" style="border-right:1px solid black; padding:4px;">
+                                    <strong>NOTIFY TO (Applicant) :</strong><br/>
+                                    <t t-esc="sale_order.partner_id.name or ''"/><br/>
+                                    <t t-esc="sale_order.partner_id.street or ''"/><br/>
+                                    <t t-esc="sale_order.partner_id.street2 or ''"/><br/>
+                                    <t t-esc="sale_order.partner_id.city or ''"/><br/>
+                                    <t t-esc="sale_order.partner_id.state_id.name or ''"/>-<t t-esc="sale_order.partner_id.zip or ''"/><br/>
+                                </div>
+                                <div class="col-2" style="border-right:1px solid black; padding:4px;">
+                                    <strong>End Use Code:</strong><br/>
+                                    <strong>Pre-Carriage By:</strong><br/>
+                                    <strong>Vessel/Container No.:</strong><br/>
+                                    <strong>Place of Receipt by Pre-Carrier:</strong>
+                                </div>
+                                <div class="col-2" style="padding:4px;">
+                                    <span t-esc="sale_order.end_use_code or ''"/><br/>
+                                    <span t-esc="sale_order.pre_carraige or ''"/><br/>
+                                    <span t-esc="sale_order.vessel_number or ''"/><br/><br/>
+                                    <span t-esc="sale_order.place_of_receipt or ''"/>
+                                </div>
+                            </div>
+
+                            <!-- Country details -->
+                            <div class="row" style="border-top:1px solid black; text-align:center;">
+                                <div class="col-3" style="border-right:1px solid black; padding:4px;">
+                                    <strong>COUNTRY OF ORIGIN</strong>
+                                </div>
+                                <div class="col-3" style="border-right:1px solid black; padding:4px;">
+                                    <strong>PORT OF LOADING</strong>
+                                </div>
+                                <div class="col-3" style="border-right:1px solid black; padding:4px;">
+                                    <strong>COUNTRY OF FINAL DESTINATION</strong>
+                                </div>
+                                <div class="col-3" style="padding:4px;">
+                                    <strong>PORT OF DISCHARGE</strong>
+                                </div>
+                            </div>
+                            <div class="row" style="border-top:1px solid black; text-align:center;">
+                                <div class="col-3" style="border-right:1px solid black; padding:4px;">
+                                    <span t-esc="sale_order.country_of_origin or ''"/>
+                                </div>
+                                <div class="col-3" style="border-right:1px solid black; padding:4px;">
+                                    <span t-esc="sale_order.port_of_loading or ''"/>
+                                </div>
+                                <div class="col-3" style="border-right:1px solid black; padding:4px;">
+                                    <span t-esc="sale_order.final_destination or ''"/>
+                                </div>
+                                <div class="col-3" style="padding:4px;">
+                                    <span t-esc="sale_order.port_of_discharge or ''"/>
+                                </div>
+                            </div>
+                            
+                            <!-- Table -->
+                            <t t-set="real_lines" t-value="[line for line in sale_order.order_line if not line.display_type]"/>
+                            <table class="table table-sm o_main_table" style="width:100%;">
+                                <thead>
+                                    <tr style="text-align: center; border: 1px solid black; border-left:none; border-right:none;">
+                                        <th class="text-center" style="width: 12%;vertical-align:center;font-weight:bold; ">Marks &amp; Nos</th>
+                                        <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold; ">No. of Boxes</th>
+                                        <th class="text-center" style="width: 18%;vertical-align:center;font-weight:bold; ">Description of Goods</th>
+                                        <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold; ">Pack Size</th>
+                                        <th class="text-center" style="width: 10%;vertical-align:center;font-weight:bold; ">Batch No.</th>
+                                        <th class="text-center" style="width: 12%;vertical-align:center;font-weight:bold; ">Exp. Dt &amp; Best before month</th>
+                                        <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold; ">HS &amp; DBK Codes</th>
+                                        <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold; ">Quantity in Unit</th>
+                                        <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold; ">Rate Per Unit in USD</th>
+                                        <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold;">Total Amount in USD</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="sale_order.order_line" t-as="line">
+                                        <!-- Add a Note (spans all columns) to appear as a single row instead of product record -->
+                                        <t t-if="line.display_type == 'line_note'">
+                                            <tr>
+                                                <td colspan="99" style="border-top: 1px solid black; font-style: italic; text-align: left; background-color: #f8f1f1ff; padding: 5px;">
+                                                    <span t-field="line.name"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <t t-elif="line.display_type == 'line_section'">
+                                            <tr>
+                                                <td colspan="13" style="border-top: 1px solid black; font-style: italic; text-align: left; background-color: #f7f7f7; padding: 5px;">
+                                                    <span t-field="line.name"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <!-- Normal Product Line -->
+                                        <t t-elif="not line.display_type">
+                                            <tr>
+                                                <td style="text-align: center;">
+                                                    <span t-if="line.marks_nos" t-field="line.marks_nos" />
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <span t-if="line.no_of_boxes" t-field="line.no_of_boxes"/>
+                                                </td>
+                                                <td style="text-align: left;">
+                                                    <span t-field="line.name"/>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <t t-if="line.pack">
+                                                        <span t-esc="line.pack"/>
+                                                    </t>
+                                                    <t t-elif="line.product_id.pack">
+                                                        <span t-esc="line.product_id.pack"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                    </t>
+                                                    <t t-if="line.custom_uom_id">
+                                                        <span t-esc="' ' + line.custom_uom_id.name"/>
+                                                    </t>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <span t-if="line.lot_id" t-field="line.lot_id.name"/>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <span t-if="line.expiration_date" t-field="line.expiration_date" t-options='{"format": "MMM-yyyy"}'/><br/>
+                                                    <span t-if="line.best_before">
+                                                        <t t-esc="line.best_before"/> months
+                                                    </span>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <t t-esc="line.product_id.l10n_in_hsn_code or ''"/><br/>
+                                                    <t t-esc="line.product_id.dbk_code or ''"/>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <span t-field="line.product_uom_qty"/>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <span t-field="line.price_unit" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <span t-esc="line.price_subtotal" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                    <!-- Totals section -->
+                                    <t>
+                                        <tr style="border-top:1px solid black;">
+                                            <td colspan="2" style="padding:4px; vertical-align:middle;">
+                                                <strong>Total Boxes:</strong>
+                                                <span t-esc="sum([l.no_of_boxes or 0 for l in sale_order.order_line if not l.display_type])"/>
+                                            </td>
+                                            <td colspan="5" style="vertical-align:middle;"></td>
+                                            <td colspan="2" style="text-align:left; padding:4px; vertical-align:middle;">
+                                                <strong>Total (in USD)</strong>
+                                            </td>
+                                            <td colspan="1" style="text-align:left; padding:4px; vertical-align:middle;">
+                                                <span t-field="o.amount_untaxed" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                            </td>
+                                        </tr>
+
+                                        <t t-set="total_with_freight" t-value="(o.amount_total or 0) + (sale_order.freight_charges or 0)"/>
+                                        <tr style="border-top:1px solid black; border-bottom:1px solid black;">
+                                            <td colspan="2" rowspan="2" style="padding:4px; vertical-align:middle;">
+                                                <strong>Grand Total in words</strong>
+                                            </td>
+                                            <td colspan="5" rowspan="2" style="vertical-align:middle;">
+                                                <span t-esc="'USD - ' + (o.currency_id.amount_to_text(total_with_freight or 0) if o.currency_id else '') + ' Only'"/>
+                                            </td>
+                                            <td colspan="2" style="text-align:left; padding:4px; vertical-align:middle;">
+                                                <strong>Freight &amp; Insurance</strong>
+                                            </td>
+                                            <td colspan="1" style="text-align:left; padding:4px; vertical-align:middle;">
+                                                <span t-field="sale_order.freight_charges" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                            </td>
+                                        </tr>
+
+                                        <tr style="border-top:1px solid black; border-bottom:1px solid black;">
+                                            <td colspan="2" style="text-align:left; padding:4px; vertical-align:middle;">
+                                                <strong>Grand Total(in USD)</strong>
+                                            </td>
+                                            <td colspan="5" style="vertical-align:middle;">
+                                                <t t-set="total_with_freight" t-value="(o.amount_total or 0) + (sale_order.freight_charges or 0)"/>
+                                                <span t-esc="total_with_freight" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                            <!-- Company ID's block -->
+                            <div class="row">
+                                <div class="col-3" style="padding:4px; white-space:nowrap;">
+                                    <strong>LUT ARN:</strong>
+                                    <span t-esc="sale_order.company_id.lut_arn or ''"/>
+                                </div>
+                                <div class="col-3" style="padding:4px; white-space:nowrap;">
+                                    <strong>GSTIN:</strong>
+                                    <span t-esc="sale_order.company_id.vat or ''"/>
+                                </div>
+                                <div class="col-3" style="padding:4px; white-space:nowrap;">
+                                    <strong>PAN NO.:</strong>
+                                    <span t-esc="sale_order.company_id.l10n_in_pan or ''"/>
+                                </div>
+                                <div class="col-3" style="padding:4px; white-space:nowrap;">
+                                    <strong>AD CODE:</strong>
+                                    <span t-esc="sale_order.company_id.ad_code or ''"/>
+                                </div>
+                            </div>
+
+                            <!-- Remarks Block -->
+                            <div class="row" style="margin-top:10px; text-align:left; border-bottom:1px solid black; border-top:1px solid black;">
+                                <div class="col-8" style="padding:4px;">
+                                    <strong>Remarks:</strong><br/>
+                                    <!-- <span t-field="sale_order.note"/> -->
+                                    <span>*SHIPMENT UNDER D.B.K.</span><br/>
+                                    <span>*SHIPMENT UNDER REWARD SCHEME</span><br/>
+                                    <span>*SUPPLY MEANT FOR EXPORT UNDER BOND WITHOUT PAYMENT OF IGST</span><br/>
+                                    <strong>Declaration:</strong><br/>
+                                    <span>We declare that this invoice shows the actual price of the goods and all particulars are true and correct.</span>
+                                </div>
+                                <div class="col-4" style="padding:4px; text-align:right;">
+                                    <strong>FOR, Ubik Solutions Pvt. Ltd.</strong><br/><br/><br/><br/><br/>
+                                    <strong>Authorised Signatory</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+                <!-- If no sale order found, show error message -->
+                <t t-if="not sale_order">
+                    <div class="page" style="padding: 20px; color: red;">
+                        <strong>Error:</strong> No Sale Order found associated with this Invoice.
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Code to set desired paper format for Packaging Invoice -->
+    <record id="paperformat_ubik_invoice_custom" model="report.paperformat">
+        <field name="name">UBIK INVOICE</field>
+        <field name="default" eval="True" />
+        <field name="format">A4</field>
+        <field name="page_height">0</field>
+        <field name="page_width">0</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">15</field>
+        <field name="margin_bottom">20</field>
+        <field name="margin_left">2</field>
+        <field name="margin_right">2</field>
+        <field name="header_line" eval="False" />
+        <field name="header_spacing">10</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <!-- Report Action -->
+    <record id="ubik_invoice_report_action" model="ir.actions.report">
+        <field name="name">Export Invoice</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ubik_invoice.ubik_invoice_report_view</field>
+        <field name="report_file">ubik_invoice.ubik_invoice_report_view</field>
+        <field name="attachment" eval="False"/> 
+        <field name="paperformat_id" ref="ubik_invoice.paperformat_ubik_invoice_custom"/>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

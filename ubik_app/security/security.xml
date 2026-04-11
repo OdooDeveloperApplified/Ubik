@@ -9,6 +9,7 @@
         <!-- Group: Sales Manager (Can Verify Records) -->
         <record id="group_sales_manager" model="res.groups">
             <field name="name">Sales Manager</field>
+            <!-- <field name="implied_ids" eval="[(4, ref('ubik_app.group_sales_user'))]"/> -->
         </record>
 
         <!-- Rule: User sees own records -->
@@ -21,15 +22,60 @@
             <field name="groups" eval="[(4, ref('ubik_app.group_sales_user'))]"/>
         </record>
 
-        <!-- Rule: Manager sees subordinate records -->
-        <record id="mr_doctor_rule_manager_subordinate" model="ir.rule">
-            <field name="name">MR Doctor: Manager Subordinate Records</field>
+        <!-- Rule: Manager sees records of direct reports (Level 1) ASM sees MR-->
+        <record id="mr_doctor_rule_manager_direct" model="ir.rule">
+            <field name="name">MR Doctor: Manager Direct Reports</field>
             <field name="model_id" ref="model_mr_doctor"/>
             <field name="domain_force">
                 [('manager_id', '=', user.id)]
             </field>
             <field name="groups" eval="[(4, ref('ubik_app.group_sales_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
         </record>
 
+        <!-- Rule: Manager sees records of indirect reports (Level 2 - reports of reports) RSM sees ASM and MR -->
+        <record id="mr_doctor_rule_manager_indirect" model="ir.rule">
+            <field name="name">MR Doctor: Manager Indirect Reports (Level 2)</field>
+            <field name="model_id" ref="model_mr_doctor"/>
+            <field name="domain_force">
+                [('mr_id.employee_id.parent_id.parent_id.user_id', '=', user.id)]
+            </field>
+            <field name="groups" eval="[(4, ref('ubik_app.group_sales_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Rule: Manager sees records of indirect reports (Level 3 - reports of reports) ZSM sees RSM, ASM and MR -->
+        <record id="mr_doctor_rule_manager_indirect_level3" model="ir.rule">
+            <field name="name">MR Doctor: Manager Indirect Reports (Level 3)</field>
+            <field name="model_id" ref="model_mr_doctor"/>
+            <field name="domain_force">
+                [('mr_id.employee_id.parent_id.parent_id.parent_id.user_id', '=', user.id)]
+            </field>
+            <field name="groups" eval="[(4, ref('ubik_app.group_sales_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Rule: Manager sees records of indirect reports (Level 4 - reports of reports) BA sees ZSM,RSM, ASM and MR -->
+        <record id="mr_doctor_rule_manager_indirect_level4" model="ir.rule">
+            <field name="name">MR Doctor: Manager Indirect Reports (Level 4)</field>
+            <field name="model_id" ref="model_mr_doctor"/>
+            <field name="domain_force">
+                [('mr_id.employee_id.parent_id.parent_id.parent_id.parent_id.user_id', '=', user.id)]
+            </field>
+            <field name="groups" eval="[(4, ref('ubik_app.group_sales_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
     </data>
 </odoo>

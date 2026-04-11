@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Document Layout template -->
+    <template id="document_layout_export_packaging" >
+        <t t-call="web.basic_layout">
+            <!-- HEADER -->
+            <div>
+                <div class="o_boxed_header">
+                    <div class="row mb-2">
+                        <!-- RIGHT: Company Logo -->
+                        <div class="col-12 text-end mb-2">
+                            <img t-if="res_company.logo" t-att-src="image_data_uri(res_company.logo)" alt="Logo" style="max-height: 80px;"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inner content -->
+            <div>
+                <t t-out="0"/>
+            </div>
+
+            <!-- Footer -->
+            <div t-attf-class="footer o_company_#{res_company.id}_layout {{report_type != 'pdf' and 'mt-auto'}}">
+                <div class="o_footer_content d-flex border-top pt-2">
+                    <div class="flex-grow-1 me-2 text-start" t-field="res_company.report_footer"/>
+                    <div class="text-end text-muted">
+                        <div t-if="report_type == 'pdf' and display_name_in_footer" t-out="o.name">(document name)</div>
+                        <div t-if="report_type == 'pdf'">Page <span class="page"/> / <span class="topage"/></div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Report content section (Inner content) -->
+    <template id="export_packaging_report_view">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="picking">
+                <!-- GET RELATED SALE ORDER from Stock Picking -->
+                <t t-set="sale_order" t-value="picking.sale_id or False"/>
+                
+                <!-- If no direct sale_id, try to get from group or origin -->
+                <t t-if="not sale_order and picking.origin">
+                    <t t-set="sale_order" t-value="picking.env['sale.order'].search([('name', '=', picking.origin)], limit=1)"/>
+                </t>
+                
+                <!-- SAFETY CHECK -->
+                <t t-if="sale_order">
+                    <t t-call="ubik_inventory.document_layout_export_packaging">
+                        <div class="page" style="border: 1px solid black; border-bottom:none; margin: 0; font-size:12px;">
+                            <div style="width:100%;text-align:center; padding:4px;border-bottom:1px solid black; line-height:40px;">
+                                <h6 style="margin:0; line-height:normal;"><strong>PACKAGING LIST</strong></h6>
+                            </div>
+                            <div style="width:100%;text-align:center; padding:4px; border-bottom:1px solid black;line-height:40px;">
+                                <h6 style="margin:0; line-height:normal;"><strong>SUPPLY MEANT FOR EXPORT UNDER LUT WITHOUT PAYMENT OF IGST</strong></h6>
+                            </div>
+
+                            <!-- Exporter Details block -->
+                            <div class="row" style="width:100%;border-bottom:1px solid black;">
+                                <div class="col-8" style="padding:4px; border-right:1px solid black;">
+                                    <span><strong>Exporter</strong></span><br/>
+                                    <strong><t t-esc="sale_order.company_id.partner_id.name or ''"/></strong><br/>
+                                    <span>2007, 21st Floor, Space Odyssey,</span><br/>
+                                    <span>Nr. KKV Hall, 150 Feet Ring Road,</span><br/>
+                                    <t t-esc="sale_order.company_id.partner_id.city or ''"/> -  <t t-esc="sale_order.company_id.partner_id.zip or ''"/>
+                                    ( <t t-esc="sale_order.company_id.partner_id.state_id.name or ''"/>, <t t-esc="sale_order.company_id.partner_id.country_id.name or ''"/>)<br/>
+                                    <span>Contact: <t t-esc="sale_order.company_id.partner_id.mobile or ''"/></span><br/>
+                                </div>
+                                <div class="col-2" style="border-right:1px solid black;padding:4px;">
+                                    <strong>Invoice No.:</strong><br/>
+                                    <strong>Invoice Date:</strong><br/>
+                                    <strong>Delivery:</strong><br/>
+                                    <strong>Payment Terms:</strong>
+                                </div>
+                                <div class="col-2" style="padding:4px;">
+                                    <!-- Get invoice from sale order if exists -->
+                                    <t t-set="invoice" t-value="sale_order.invoice_ids and sale_order.invoice_ids[0] or False"/>
+                                    <span t-esc="invoice and invoice.name or 'Not Invoiced Yet'"/><br/>
+                                    <span t-esc="invoice and invoice.invoice_date or ''" t-options='{"widget": "date"}'/><br/>
+                                    <span t-esc="sale_order.delivery or ''"/><br/>
+                                    <span t-esc="sale_order.payment_term_id.name or ''"/>
+                                </div>
+                            </div>
+
+                            <!-- Consignee Details block -->
+                            <div class="row">
+                                <div class="col-4" style="border-right:1px solid black; padding:4px;">
+                                    <strong>CONSIGNED TO :</strong><br/>
+                                    <t t-esc="sale_order.consignee_id.name or ''"/><br/>
+                                    <t t-esc="sale_order.consignee_id.street or ''"/><br/>
+                                    <t t-esc="sale_order.consignee_id.street2 or ''"/><br/>
+                                    <t t-esc="sale_order.consignee_id.city or ''"/><br/>
+                                    <t t-esc="sale_order.consignee_id.state_id.name or ''"/>-<t t-esc="sale_order.consignee_id.zip or ''"/><br/>
+                                </div>
+                                <div class="col-4" style="border-right:1px solid black; padding:4px;">
+                                    <strong>NOTIFY TO (Applicant) :</strong><br/>
+                                    <t t-esc="sale_order.partner_id.name or ''"/><br/>
+                                    <t t-esc="sale_order.partner_id.street or ''"/><br/>
+                                    <t t-esc="sale_order.partner_id.street2 or ''"/><br/>
+                                    <t t-esc="sale_order.partner_id.city or ''"/><br/>
+                                    <t t-esc="sale_order.partner_id.state_id.name or ''"/>-<t t-esc="sale_order.partner_id.zip or ''"/><br/>
+                                </div>
+                                <div class="col-2" style="border-right:1px solid black; padding:4px;">
+                                    <strong>End Use Code:</strong><br/>
+                                    <strong>Pre-Carriage By:</strong><br/>
+                                    <strong>Vessel/Container No.:</strong><br/>
+                                    <strong>Place of Receipt by Pre-Carrier:</strong>
+                                </div>
+                                <div class="col-2" style="padding:4px;">
+                                    <span t-esc="sale_order.end_use_code or ''"/><br/>
+                                    <span t-esc="sale_order.pre_carraige or ''"/><br/>
+                                    <span t-esc="sale_order.vessel_number or ''"/><br/><br/>
+                                    <span t-esc="sale_order.place_of_receipt or ''"/>
+                                </div>
+                            </div>
+
+                            <!-- Country details -->
+                            <div class="row" style="border-top:1px solid black; text-align:center;">
+                                <div class="col-3" style="border-right:1px solid black; padding:4px;">
+                                    <strong>COUNTRY OF ORIGIN</strong>
+                                </div>
+                                <div class="col-3" style="border-right:1px solid black; padding:4px;">
+                                    <strong>PORT OF LOADING</strong>
+                                </div>
+                                <div class="col-3" style="border-right:1px solid black; padding:4px;">
+                                    <strong>COUNTRY OF FINAL DESTINATION</strong>
+                                </div>
+                                <div class="col-3" style="padding:4px;">
+                                    <strong>PORT OF DISCHARGE</strong>
+                                </div>
+                            </div>
+                            <div class="row" style="border-top:1px solid black; text-align:center;">
+                                <div class="col-3" style="border-right:1px solid black; padding:4px;">
+                                    <span t-esc="sale_order.country_of_origin or ''"/>
+                                </div>
+                                <div class="col-3" style="border-right:1px solid black; padding:4px;">
+                                    <span t-esc="sale_order.port_of_loading or ''"/>
+                                </div>
+                                <div class="col-3" style="border-right:1px solid black; padding:4px;">
+                                    <span t-esc="sale_order.final_destination or ''"/>
+                                </div>
+                                <div class="col-3" style="padding:4px;">
+                                    <span t-esc="sale_order.port_of_discharge or ''"/>
+                                </div>
+                            </div>
+                            
+                            <!-- Table - Data from stock.picking move lines -->
+                            <table class="table table-sm o_main_table" style="width:100%;">
+                                <thead>
+                                    <tr style="text-align: center;">
+                                        <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold;">Marks &amp; Nos</th>
+                                        <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold;">No. of Boxes</th>
+                                        <th class="text-center" style="width: 18%;vertical-align:center;font-weight:bold;">Description of Goods</th>
+                                        <th class="text-center" style="width: 6%;vertical-align:center;font-weight:bold;">Pack Size</th>
+                                        <th class="text-center" style="width: 6%;vertical-align:center;font-weight:bold;">Batch No.</th>
+                                        <th class="text-center" style="width: 10%;vertical-align:center;font-weight:bold;">Exp. Dt &amp; Best before month</th>
+                                        <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold;">HS &amp; DBK Codes</th>
+                                        <th class="text-center" style="width: 6%;vertical-align:center;font-weight:bold;">Quantity in Unit</th>
+                                        <th class="text-center" style="width: 6%;vertical-align:center;font-weight:bold;">Net wt.in KGs per box</th>
+                                        <th class="text-center" style="width: 6%;vertical-align:center;font-weight:bold;">Gross wt.in KGs per box</th>
+                                        <th class="text-center" style="width: 6%;vertical-align:center;font-weight:bold;">Dimensions in MM</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Iterate through stock move lines instead of sale order lines -->
+                                    <t t-foreach="picking.move_ids" t-as="move">
+                                       
+                                        <t>
+                                            <tr>
+                                                <!-- Marks & Nos - from stock move line -->
+                                                <td style="text-align: center;">
+                                                    <span t-if="move.marks_nos" t-field="move.marks_nos"/>
+                                                    <span t-if="not move.marks_nos"></span>
+                                                </td>
+                                                
+                                                <!-- No. of Boxes - from stock move line -->
+                                                <td style="text-align: center;">
+                                                    <span t-if="move.no_of_boxes" t-field="move.no_of_boxes"/>
+                                                    <span t-if="not move.no_of_boxes">1</span>
+                                                </td>
+                                                
+                                                <!-- Description of Goods - from product -->
+                                                <td style="text-align: left;">
+                                                    <span t-field="move.product_id.name"/>
+                                                </td>
+                                                
+                                                <!-- Pack Size - from stock move line -->
+                                                <td style="text-align: center;">
+                                                    <span t-if="move.product_id.pack_size" t-field="move.product_id.pack_size"/>
+                                                </td>
+                                                
+                                                <!-- Batch No. - from stock move line's lot -->
+                                                <td style="text-align: center;">
+                                                    <span t-if="move.lot_ids" t-field="move.lot_ids[0].name"/>
+                                                </td>
+                                                
+                                                <!-- Exp. Date & Best Before - from stock move line -->
+                                                <td style="text-align: center;">
+                                                    <t t-set="lot_expiry_dates" t-value="[]"/>
+                                                    <t t-foreach="move.move_line_ids" t-as="ml">
+                                                        <t t-if="ml.lot_id and ml.lot_id.expiration_date">
+                                                            <t t-set="lot_expiry_dates" t-value="lot_expiry_dates + [ml.lot_id.expiration_date]"/>
+                                                        </t>
+                                                    </t>
+                                                    <t t-if="lot_expiry_dates">
+                                                        <t t-foreach="lot_expiry_dates" t-as="exp_date">
+                                                            <t t-set="formatted_date" t-value="exp_date.strftime('%b-%Y') if exp_date else ''"/>
+                                                            <span t-esc="formatted_date"/>
+                                                            <t t-if="not exp_date_last">, </t>
+                                                        </t>
+                                                    </t>
+                                                    <t t-if="not lot_expiry_dates">
+                                                        <span></span>
+                                                    </t>
+                                                    <br/>
+
+                                                    <!-- Best Before from Sale Order Line -->
+                                                    <t t-if="move.sale_line_id and move.sale_line_id.best_before">
+                                                        <span>
+                                                            <t t-esc="move.sale_line_id.best_before"/> months
+                                                        </span>
+                                                    </t>
+                                                </td>
+                                                
+                                                <!-- HS & DBK Codes - from product -->
+                                                <td style="text-align: center;">
+                                                    <t t-esc="move.product_id.l10n_in_hsn_code or ''"/><br/>
+                                                    <t t-esc="move.product_id.dbk_code or ''"/>
+                                                </td>
+                                                
+                                                <!-- Quantity - from stock move line -->
+                                                <td style="text-align: center;">
+                                                    <span t-esc="'%.2f' % move.product_uom_qty"/>
+                                                    <span t-field="move.product_uom"/>
+                                                </td>
+                                                
+                                                <!-- Net wt. per box - from product -->
+                                                <td style="text-align: center;">
+                                                    <span t-if="move.product_id.net_weight_per_box" t-esc="'%.3f' % move.product_id.net_weight_per_box"/>
+                                                    <span t-if="not move.product_id.net_weight_per_box">0.00</span>
+                                                </td>
+                                                
+                                                <!-- Gross wt. per box - from product -->
+                                                <td style="text-align: center;">
+                                                    <span t-if="move.product_id.gross_weight_per_box" t-esc="'%.3f' % move.product_id.gross_weight_per_box"/>
+                                                    <span t-if="not move.product_id.gross_weight_per_box">0.00</span>
+                                                </td>
+                                                
+                                                <!-- Dimensions - from product -->
+                                                <td style="text-align: center;">
+                                                    <span t-if="move.product_id.box_dimensions" t-field="move.product_id.box_dimensions"/>
+                                                    <span t-if="not move.product_id.box_dimensions"></span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                    
+                                    <!-- Totals section - Calculate from stock move lines -->
+                                    <t>
+                                        <!-- Calculate totals -->
+                                        <t t-set="total_boxes" t-value="sum([move.no_of_boxes or 1 for move in picking.move_ids])"/>
+                                        <t t-set="total_quantity" t-value="sum([move.product_uom_qty or 0 for move in picking.move_ids])"/>
+                                        <t t-set="total_net_weight" t-value="sum([(move.no_of_boxes or 1) * (move.product_id.net_weight_per_box or 0) for move in picking.move_ids])"/>
+                                        <t t-set="total_gross_weight" t-value="sum([(move.no_of_boxes or 1) * (move.product_id.gross_weight_per_box or 0) for move in picking.move_ids])"/>
+                                        
+                                        <tr>
+                                            <td colspan="2" style="padding:4px; vertical-align:middle;">
+                                                <strong>Total Boxes:</strong>
+                                                <span t-esc="total_boxes"/>
+                                            </td>
+                                            <td colspan="5" style="vertical-align:middle;"></td>
+                                            <td colspan="2" style="text-align:left; padding:4px; vertical-align:middle;">
+                                                <strong>Total Quantity</strong>
+                                            </td>
+                                            <td colspan="2" style="text-align:left; padding:4px; vertical-align:middle;">
+                                                <span t-esc="'%.2f' % total_quantity"/>
+                                            </td>
+                                        </tr>
+
+                                        <tr style="border-top:1px solid black; border-bottom:1px solid black;">
+                                            <td colspan="2" style="padding:4px; vertical-align:middle;">
+                                                <strong>Net Weight in words</strong>
+                                            </td>
+                                            <td colspan="5" style="vertical-align:middle;">
+                                                <span t-esc="picking.amount_to_words_kg('%.3f' % total_net_weight)"/>
+                                            </td>
+                                            <td colspan="2" style="text-align:left; padding:4px; vertical-align:middle;">
+                                                <strong>Total Net Wt.in Kgs</strong>
+                                            </td>
+                                            <td colspan="2" style="text-align:left; padding:4px; vertical-align:middle;">
+                                                 <span t-esc="'%.3f' % total_net_weight"/>
+                                            </td>
+                                        </tr>
+
+                                        <tr style="border-top:1px solid black; border-bottom:1px solid black;">
+                                            <td colspan="2" style="text-align:left; padding:4px; vertical-align:middle;">
+                                                <strong>Gross Weight in words</strong>
+                                            </td>
+                                                <td colspan="5" style="vertical-align:middle;">
+                                                <span t-esc="picking.amount_to_words_kg('%.3f' % total_gross_weight)"/>
+                                            </td>
+                                            <td colspan="2" style="text-align:left; padding:4px; vertical-align:middle;">
+                                                <strong>Total Gross Wt. in Kgs.</strong>
+                                            </td>
+                                            <td colspan="2" style="text-align:left; padding:4px; vertical-align:middle;">
+                                                <span t-esc="'%.3f' % total_gross_weight"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                            <!-- Company ID's block -->
+                            <div class="row" style="margin-top: 10px;">
+                                <div class="col-3" style="padding:4px; white-space:nowrap;">
+                                    <strong>LUT ARN:</strong>
+                                    <span t-esc="sale_order.company_id.lut_arn or ''"/>
+                                </div>
+                                <div class="col-3" style="padding:4px; white-space:nowrap;">
+                                    <strong>GSTIN:</strong>
+                                    <span t-esc="sale_order.company_id.vat or ''"/>
+                                </div>
+                                <div class="col-3" style="padding:4px; white-space:nowrap;">
+                                    <strong>PAN NO.:</strong>
+                                    <span t-esc="sale_order.company_id.l10n_in_pan or ''"/>
+                                </div>
+                                <div class="col-3" style="padding:4px; white-space:nowrap;">
+                                    <strong>AD CODE:</strong>
+                                    <span t-esc="sale_order.company_id.ad_code or ''"/>
+                                </div>
+                            </div>
+
+                            <!-- Remarks Block -->
+                            <div class="row" style="margin-top:10px; text-align:left; border-bottom:1px solid black; border-top:1px solid black;">
+                                <div class="col-8" style="padding:4px;">
+                                    <strong>Remarks:</strong><br/>
+                                    <!-- <span t-field="sale_order.note"/> -->
+                                    <span>*SHIPMENT UNDER D.B.K.</span><br/>
+                                    <span>*SHIPMENT UNDER REWARD SCHEME</span><br/>
+                                    <span>*SUPPLY MEANT FOR EXPORT UNDER BOND WITHOUT PAYMENT OF IGST</span><br/>
+                                    <strong>Declaration:</strong><br/>
+                                    <span>We declare that this invoice shows the actual price of the goods and all particulars are true and correct.</span>
+                                </div>
+                                <div class="col-4" style="padding:4px; text-align:right;">
+                                    <strong>FOR, Ubik Solutions Pvt. Ltd.</strong><br/><br/><br/><br/><br/>
+                                    <strong>Authorised Signatory</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+                <!-- If no sale order found, show error message -->
+                <t t-if="not sale_order">
+                    <div class="page" style="padding: 20px; color: red;">
+                        <strong>Error:</strong> No Sale Order found associated with this Stock Picking.
+                        <br/>Please ensure this delivery order is linked to a sale order.
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Code to set desired paper format for Packaging Invoice -->
+    <record id="paperformat_export_packaging_custom" model="report.paperformat">
+        <field name="name">EXPORT PACKAGING</field>
+        <field name="default" eval="True" />
+        <field name="format">A4</field>
+        <field name="page_height">0</field>
+        <field name="page_width">0</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">15</field>
+        <field name="margin_bottom">20</field>
+        <field name="margin_left">2</field>
+        <field name="margin_right">2</field>
+        <field name="header_line" eval="False" />
+        <field name="header_spacing">10</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <!-- Report Action - Bound to Stock Picking -->
+    <record id="export_packaging_report_action" model="ir.actions.report">
+        <field name="name">Export Packaging List</field>
+        <field name="model">stock.picking</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ubik_inventory.export_packaging_report_view</field>
+        <field name="report_file">ubik_inventory.export_packaging_report_view</field>
+        <field name="attachment" eval="False"/> 
+        <field name="paperformat_id" ref="ubik_inventory.paperformat_export_packaging_custom"/>
+        <field name="binding_model_id" ref="stock.model_stock_picking"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

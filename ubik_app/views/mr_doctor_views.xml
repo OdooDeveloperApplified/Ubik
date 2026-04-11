@@ -14,7 +14,7 @@
                             type="object"
                             class="btn-primary"
                             groups="ubik_app.group_sales_user,base.group_system"
-                            invisible="asm_state != 'draft'"/>
+                            invisible="asm_state != 'draft' or mr_id != uid"/>
 
                     <!-- Verify Button (Visible to ASM only when Pending) -->
                     <button name="action_verify_by_asm"
@@ -31,22 +31,6 @@
                             class="btn-danger"
                             groups="ubik_app.group_sales_manager, base.group_system"
                             invisible="asm_state != 'submitted' or manager_id != uid"/>
-
-                    <!-- Unlock Button for Admin -->
-                    <!-- <button name="action_unlock_record"
-                        string="Unlock for Edit"
-                        type="object"
-                        class="btn-warning"
-                        groups="base.group_system"
-                        invisible="not record_save or unlock_for_edit"/> -->
-                    
-                     <!-- Lock button for Admin -->
-                    <!-- <button name="action_lock_after_edit"
-                        string="Lock"
-                        type="object"
-                        class="btn-danger"
-                        groups="base.group_system"
-                        invisible="not unlock_for_edit"/> -->
         
                     <!-- Statusbar -->
                     <field name="asm_state"

@@ -23,7 +23,7 @@
             <!-- Footer -->
             <div t-attf-class="footer o_company_#{res_company.id}_layout {{report_type != 'pdf' and 'mt-auto'}}">
                 <div class="o_footer_content d-flex border-top pt-2">
-                    <div class="flex-grow-1 me-2 text-start" t-field="res_company.report_footer"/>
+                    <!-- <div class="flex-grow-1 me-2 text-start" t-field="res_company.report_footer"/> -->
                     <div class="text-end text-muted">
                         <div t-if="report_type == 'pdf' and display_name_in_footer" t-out="o.name">(document name)</div>
                         <div t-if="report_type == 'pdf'">Page <span class="page"/> / <span class="topage"/></div>
@@ -57,7 +57,7 @@
                             </div>
 
                             <!-- Exporter Details block -->
-                            <div class="row" style="width:100%;border-bottom:1px solid black;">
+                            <div class="row" style="width:100%;border-bottom:1px solid black;margin:0;">
                                 <div class="col-8" style="padding:4px; border-right:1px solid black;">
                                     <span><strong>Exporter</strong></span><br/>
                                     <strong><t t-esc="sale_order.company_id.partner_id.name or ''"/></strong><br/>
@@ -82,7 +82,7 @@
                             </div>
 
                             <!-- Consignee Details block -->
-                            <div class="row">
+                            <div class="row" style="margin:0;">
                                 <div class="col-4" style="border-right:1px solid black; padding:4px;">
                                     <strong>CONSIGNED TO :</strong><br/>
                                     <t t-esc="sale_order.consignee_id.name or ''"/><br/>
@@ -114,7 +114,7 @@
                             </div>
 
                             <!-- Country details -->
-                            <div class="row" style="border-top:1px solid black; text-align:center;">
+                            <div class="row" style="border-top:1px solid black; text-align:center;margin:0;">
                                 <div class="col-3" style="border-right:1px solid black; padding:4px;">
                                     <strong>COUNTRY OF ORIGIN</strong>
                                 </div>
@@ -128,7 +128,7 @@
                                     <strong>PORT OF DISCHARGE</strong>
                                 </div>
                             </div>
-                            <div class="row" style="border-top:1px solid black; text-align:center;">
+                            <div class="row" style="border-top:1px solid black; text-align:center;margin:0;">
                                 <div class="col-3" style="border-right:1px solid black; padding:4px;">
                                     <span t-esc="sale_order.country_of_origin or ''"/>
                                 </div>
@@ -145,7 +145,7 @@
                             
                             <!-- Table -->
                             <t t-set="real_lines" t-value="[line for line in sale_order.order_line if not line.display_type]"/>
-                            <table class="table table-sm o_main_table" style="width:100%;">
+                            <table class="table table-bordered table-sm o_main_table" style="width:100%;">
                                 <thead>
                                     <tr style="text-align: center; border: 1px solid black; border-left:none; border-right:none;">
                                         <th class="text-center" style="width: 12%;vertical-align:center;font-weight:bold; ">Marks &amp; Nos</th>
@@ -156,8 +156,8 @@
                                         <th class="text-center" style="width: 12%;vertical-align:center;font-weight:bold; ">Exp. Dt &amp; Best before month</th>
                                         <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold; ">HS &amp; DBK Codes</th>
                                         <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold; ">Quantity in Unit</th>
-                                        <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold; ">Rate Per Unit in USD</th>
-                                        <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold;">Total Amount in USD</th>
+                                        <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold; "><t t-esc="'Rate Per Unit in %s' % (o.currency_id.name or '')"/></th>
+                                        <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold;border-right:none;"><t t-esc="'Total Amount in %s' % (o.currency_id.name or '')"/></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -236,7 +236,7 @@
                                             </td>
                                             <td colspan="5" style="vertical-align:middle;"></td>
                                             <td colspan="2" style="text-align:left; padding:4px; vertical-align:middle;">
-                                                <strong>Total (in USD)</strong>
+                                                <strong><t t-esc="'Total (in %s)' % (o.currency_id.name or '')"/></strong>
                                             </td>
                                             <td colspan="1" style="text-align:left; padding:4px; vertical-align:middle;">
                                                 <span t-field="o.amount_untaxed" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
@@ -249,7 +249,7 @@
                                                 <strong>Grand Total in words</strong>
                                             </td>
                                             <td colspan="5" rowspan="2" style="vertical-align:middle;">
-                                                <span t-esc="'USD - ' + (o.currency_id.amount_to_text(total_with_freight or 0) if o.currency_id else '') + ' Only'"/>
+                                                <span t-esc="o.currency_id.name + ' - ' + o.currency_id.amount_to_text(total_with_freight or 0) + ' Only'"/>
                                             </td>
                                             <td colspan="2" style="text-align:left; padding:4px; vertical-align:middle;">
                                                 <strong>Freight &amp; Insurance</strong>
@@ -261,7 +261,7 @@
 
                                         <tr style="border-top:1px solid black; border-bottom:1px solid black;">
                                             <td colspan="2" style="text-align:left; padding:4px; vertical-align:middle;">
-                                                <strong>Grand Total(in USD)</strong>
+                                                <strong><t t-esc="'Grand Total (in %s)' % (o.currency_id.name or '')"/></strong>
                                             </td>
                                             <td colspan="5" style="vertical-align:middle;">
                                                 <t t-set="total_with_freight" t-value="(o.amount_total or 0) + (sale_order.freight_charges or 0)"/>
@@ -273,7 +273,7 @@
                             </table>
 
                             <!-- Company ID's block -->
-                            <div class="row">
+                            <div class="row" style="margin:0;">
                                 <div class="col-3" style="padding:4px; white-space:nowrap;">
                                     <strong>LUT ARN:</strong>
                                     <span t-esc="sale_order.company_id.lut_arn or ''"/>
@@ -293,7 +293,7 @@
                             </div>
 
                             <!-- Remarks Block -->
-                            <div class="row" style="margin-top:10px; text-align:left; border-bottom:1px solid black; border-top:1px solid black;">
+                            <div class="row" style="margin-top:10px; text-align:left; border-bottom:1px solid black; border-top:1px solid black; margin:0;">
                                 <div class="col-8" style="padding:4px;">
                                     <strong>Remarks:</strong><br/>
                                     <!-- <span t-field="sale_order.note"/> -->
@@ -303,7 +303,7 @@
                                     <strong>Declaration:</strong><br/>
                                     <span>We declare that this invoice shows the actual price of the goods and all particulars are true and correct.</span>
                                 </div>
-                                <div class="col-4" style="padding:4px; text-align:right;">
+                                <div class="col-4" style="padding:4px; text-align:right; border-left:1px solid black;">
                                     <strong>FOR, Ubik Solutions Pvt. Ltd.</strong><br/><br/><br/><br/><br/>
                                     <strong>Authorised Signatory</strong>
                                 </div>

@@ -72,13 +72,26 @@
         </field>
     </record> 
 
+    <!-- Code to add custom field to sale order tree view -->
+    <record id="view_sale_order_tree" model="ir.ui.view">
+        <field name="name">sale.order.tree</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="order_type" widget="badge"
+                decoration-warning="order_type == 'domestic'"
+                decoration-danger="order_type == 'export'" optional="1"/>
+            </xpath>
+        </field>
+    </record>
+
     <!-- Code to add export type sale order field on delivery slip:starts -->
     <record id="view_picking_form_inherit_boxes_marks" model="ir.ui.view">
         <field name="name">stock.picking.form.boxes.marks</field>
         <field name="model">stock.picking</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
-
             <!-- Add under Operations or Extra Info -->
             <xpath expr="//field[@name='move_ids_without_package']/list/field[@name='product_id']" position="before">
                 <field name="marks_nos" optional="1"/>

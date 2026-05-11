@@ -79,109 +79,113 @@ class MrDoctorFinalSalesReport(models.Model):
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute("""
-            CREATE OR REPLACE VIEW mr_doctor_final_sales_report AS (
 
-                WITH sales AS (
-                    SELECT
-                        doc.territory_id,
-                        doc.doctor_id,
-                        to_date(line.month, 'YYYY-MM') AS sale_date,
-                        line.amount,
-                        CASE
-                            WHEN EXTRACT(MONTH FROM to_date(line.month,'YYYY-MM')) >= 4
-                                THEN EXTRACT(YEAR FROM to_date(line.month,'YYYY-MM'))
-                            ELSE EXTRACT(YEAR FROM to_date(line.month,'YYYY-MM')) - 1
-                        END AS fy_year
-                    FROM mr_doctor_line line
-                    JOIN mr_doctor doc ON doc.id = line.mr_doctor_id
-                ),
+        CREATE OR REPLACE VIEW mr_doctor_final_sales_report AS (
 
-                fy_stats AS (
-                    SELECT
-                        territory_id,
-                        doctor_id,
-                        fy_year,
-                        COUNT(DISTINCT date_trunc('month', sale_date)) AS month_count,
-                        SUM(amount) AS fy_total
-                    FROM sales
-                    GROUP BY territory_id, doctor_id, fy_year
-                )
+        WITH base AS (
+            SELECT
+                doc.territory_id,
+                doc.doctor_id,
 
-                SELECT
-                    row_number() OVER () AS id,
-                    s.territory_id,
-                    s.doctor_id,
-                    s.fy_year,
-                            
-                    CASE
-                        WHEN s.fy_year = (
-                            CASE
-                                WHEN EXTRACT(MONTH FROM CURRENT_DATE) >= 4
-                                    THEN EXTRACT(YEAR FROM CURRENT_DATE)
-                                ELSE EXTRACT(YEAR FROM CURRENT_DATE) - 1
-                            END
-                        )
-                        THEN TRUE
-                        ELSE FALSE
-                    END AS is_current_fy,
+                -- SAFE amount
+                COALESCE(NULLIF(line.amount::text, 'NaN')::numeric, 0) AS amount,
 
-                    -- Previous FY average
-                    (
-                        SELECT fs_prev.fy_total / NULLIF(fs_prev.month_count, 0)
-                        FROM fy_stats fs_prev
-                        WHERE fs_prev.territory_id = s.territory_id
-                          AND fs_prev.doctor_id = s.doctor_id
-                          AND fs_prev.fy_year = s.fy_year - 1
-                    ) AS prev_avg,
+                -- PRECOMPUTE DATE ONCE
+                TO_DATE(line.month, 'YYYY-MM') AS sale_date
 
-                    -- Current FY average
-                    fs.fy_total / NULLIF(fs.month_count, 0) AS curr_avg,
+            FROM mr_doctor_line line
+            JOIN mr_doctor doc ON doc.id = line.mr_doctor_id
+        ),
 
-                    -- FY total difference (Curr - Prev)
-                    fs.fy_total
-                    -
-                    COALESCE((
-                        SELECT fs_prev.fy_total
-                        FROM fy_stats fs_prev
-                        WHERE fs_prev.territory_id = s.territory_id
-                          AND fs_prev.doctor_id = s.doctor_id
-                          AND fs_prev.fy_year = s.fy_year - 1
-                    ), 0) AS total_diff,
+        sales AS (
+            SELECT
+                *,
+                EXTRACT(MONTH FROM sale_date) AS month_num,
 
-                    -- Current calendar month total (only affects current FY rows)
-                    SUM(
-                        CASE
-                            WHEN date_trunc('month', s.sale_date) =
-                                 date_trunc('month', CURRENT_DATE)
-                            THEN s.amount ELSE 0
-                        END
-                    ) AS curr_month_total,
+                CASE
+                    WHEN EXTRACT(MONTH FROM sale_date) >= 4
+                        THEN EXTRACT(YEAR FROM sale_date)
+                    ELSE EXTRACT(YEAR FROM sale_date) - 1
+                END AS fy_year
+            FROM base
+        ),
 
-                    -- FY total - FY average
-                    fs.fy_total - (fs.fy_total / NULLIF(fs.month_count, 0))
-                    AS nov_vs_avg_diff,
+        fy_stats AS (
+            SELECT
+                territory_id,
+                doctor_id,
+                fy_year,
+                COUNT(DISTINCT date_trunc('month', sale_date)) AS month_count,
+                SUM(amount) AS fy_total
+            FROM sales
+            GROUP BY territory_id, doctor_id, fy_year
+        )
 
-                    MAX(r.remarks) AS remarks
+        SELECT
+            row_number() OVER () AS id,
+            s.territory_id,
+            s.doctor_id,
+            s.fy_year,
 
-                FROM sales s
-                JOIN fy_stats fs
-                  ON fs.territory_id = s.territory_id
-                 AND fs.doctor_id = s.doctor_id
-                 AND fs.fy_year = s.fy_year
+            -- Current FY flag (optimized)
+            (
+                s.fy_year =
+                CASE
+                    WHEN EXTRACT(MONTH FROM CURRENT_DATE) >= 4
+                        THEN EXTRACT(YEAR FROM CURRENT_DATE)
+                    ELSE EXTRACT(YEAR FROM CURRENT_DATE) - 1
+                END
+            ) AS is_current_fy,
 
-                LEFT JOIN mr_doctor_final_sales_remarks r
-                  ON r.territory_id = s.territory_id
-                 AND r.doctor_id = s.doctor_id
-                 AND r.fy_year = s.fy_year
+            -- Previous FY avg (JOIN instead of subquery)
+            (fs_prev.fy_total / NULLIF(fs_prev.month_count, 0)) AS prev_avg,
 
-                GROUP BY
-                    s.territory_id,
-                    s.doctor_id,
-                    s.fy_year,
-                    is_current_fy,
-                    fs.fy_total,
-                    fs.month_count
-            )
+            -- Current FY avg
+            (fs.fy_total / NULLIF(fs.month_count, 0)) AS curr_avg,
+
+            -- Total diff
+            (fs.fy_total - COALESCE(fs_prev.fy_total, 0)) AS total_diff,
+
+            -- Current month total (no repeated date_trunc)
+            SUM(
+                CASE
+                    WHEN date_trunc('month', s.sale_date) = date_trunc('month', CURRENT_DATE)
+                    THEN s.amount ELSE 0
+                END
+            ) AS curr_month_total,
+
+            -- FY vs avg diff
+            (fs.fy_total - (fs.fy_total / NULLIF(fs.month_count, 0))) AS nov_vs_avg_diff,
+
+            MAX(r.remarks) AS remarks
+
+        FROM sales s
+
+        JOIN fy_stats fs
+            ON fs.territory_id = s.territory_id
+        AND fs.doctor_id = s.doctor_id
+        AND fs.fy_year = s.fy_year
+
+        LEFT JOIN fy_stats fs_prev
+            ON fs_prev.territory_id = s.territory_id
+        AND fs_prev.doctor_id = s.doctor_id
+        AND fs_prev.fy_year = s.fy_year - 1
+
+        LEFT JOIN mr_doctor_final_sales_remarks r
+            ON r.territory_id = s.territory_id
+        AND r.doctor_id = s.doctor_id
+        AND r.fy_year = s.fy_year
+
+        GROUP BY
+            s.territory_id,
+            s.doctor_id,
+            s.fy_year,
+            fs.fy_total,
+            fs.month_count,
+            fs_prev.fy_total,
+            fs_prev.month_count
+
+        )
         """)
 
 

@@ -19,7 +19,11 @@
             
             <!-- New code relating to MR & Doctor:UBIK APP CODE starts -->
             <xpath expr="//field[@name='function']" position="after">
-                <field name="territory_id"/>
+                <field name="territory_id" widget="many2many_tags"/>
+            </xpath>
+
+            <xpath expr="//div[@class='o_address_format']" position="after">
+                <field name="contact_type" widget="radio" options="{'horizontal': true}"/>
             </xpath>
 
             <xpath expr="//h1" position="after">

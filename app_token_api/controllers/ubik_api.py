@@ -3,9 +3,18 @@ from odoo.http import request, Response
 from .token import validate_api_request
 from datetime import datetime
 import json
+import math
 import logging
 
 _logger = logging.getLogger(__name__)
+
+def safe_float(val):
+    try:
+        if val is None or (isinstance(val, float) and math.isnan(val)):
+            return 0.0
+        return round(float(val), 2)
+    except Exception:
+        return 0.0
 
 ############### API to list product categories present in odoo databse in mobile app ##########################
 
@@ -526,6 +535,7 @@ class MrDoctorCreateAPI(http.Controller):
             "success": True,
             "message": "MR Doctor visit created and submitted to manager",
             "mr_doctor_id": mr_doctor.id,
+           "created_on": mr_doctor.create_date.strftime('%d-%m-%Y') if mr_doctor.create_date else None,
             "reference": mr_doctor.name,
             "status": mr_doctor.asm_state,
             "is_first_today": is_first_today,  # Add this to response
@@ -612,9 +622,9 @@ class MRDoctorListAPI(http.Controller):
                         "product_name": line.product_id.display_name if line.product_id else None,
                         "rate_type": line.rate_type,
                         "unit_price": line.price_unit,
-                        "quantity": line.product_qty,
-                        "amount": line.amount,
-                        "discount_percent": line.discount_percent
+                         "quantity": safe_float(line.product_qty),
+                        "amount": safe_float(line.amount),
+                        "discount_percent": round(line.discount_percent or 0.0, 2)
                     })
 
                 visit_data = {
@@ -630,7 +640,7 @@ class MRDoctorListAPI(http.Controller):
                     "status": visit.asm_state,
                     "total_lines": len(line_items),
                     "lines": line_items,
-
+                    "created_on": visit.create_date.strftime('%d-%m-%Y') if visit.create_date else None,
                     # ===== PERMISSION FLAGS =====
                     "can_edit": can_edit,
                     "can_delete": can_delete,
@@ -692,6 +702,14 @@ class MRDoctorVerifyActionAPI(http.Controller):
             }), content_type='application/json')
 
         visit = request.env['mr.doctor'].sudo().browse(int(visit_id))
+
+        ################################Check if record is locked (past month and not unlocked)
+        if visit.record_save and not visit.unlock_for_edit:
+            return Response(json.dumps({
+                "success": False,
+                "message": "Past month records are locked. Please contact Admin to unlock."
+            }), status=200, content_type='application/json')
+        ##########################################################################
 
         if not visit.exists():
             return Response(json.dumps({
@@ -1291,6 +1309,7 @@ class MRDoctorDeleteAPI(http.Controller):
                 "message": str(e)
             }), content_type='application/json')
 
+########## API for Manager Dashboard: Display records count ##########################
 class ManagerDashboardVisitsAPI(http.Controller):
 
     @http.route('/manager_dashboard_visits', type='http', auth='public', cors='*', methods=['POST'], csrf=False)

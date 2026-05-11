@@ -13,9 +13,14 @@ class ContactsTemplate(models.Model):
 
     ########## UBIK APP CODE STARTS ##############
     is_doctor = fields.Boolean(string="Is Doctor")
-    territory_id = fields.Many2one('territory.name',string='Territory')
+    territory_id = fields.Many2many('territory.name',string='Territory/(ies)')
     doc_unique_id = fields.Char(string='Doctor ID')
     ########## UBIK APP CODE ENDS ##############
+
+    contact_type = fields.Selection([
+        ('vendor', 'Vendor'),
+        ('manufacturer', 'Manufacturer'),
+    ], string = 'Contact Type')
 
 class TerritoryName(models.Model):
     _name = 'territory.name'

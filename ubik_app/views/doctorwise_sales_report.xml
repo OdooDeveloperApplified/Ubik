@@ -63,7 +63,7 @@
         <field name="res_model">mr.doctor.sales.report</field>
         <field name="view_mode">list</field>
         <field name="context">
-            {'group_by': ['doctor_id'],
+            {
              'search_default_current_year': 1
             }
         </field>

@@ -23,7 +23,7 @@
             <!-- Footer -->
             <div t-attf-class="footer o_company_#{res_company.id}_layout {{report_type != 'pdf' and 'mt-auto'}}">
                 <div class="o_footer_content d-flex border-top pt-2">
-                    <div class="flex-grow-1 me-2 text-start" t-field="res_company.report_footer"/>
+                    <!-- <div class="flex-grow-1 me-2 text-start" t-field="res_company.report_footer"/> -->
                     <div class="text-end text-muted">
                         <div t-if="report_type == 'pdf' and display_name_in_footer" t-out="o.name">(document name)</div>
                         <div t-if="report_type == 'pdf'">Page <span class="page"/> / <span class="topage"/></div>
@@ -57,7 +57,7 @@
                             </div>
 
                             <!-- Exporter Details block -->
-                            <div class="row" style="width:100%;border-bottom:1px solid black;">
+                            <div class="row" style="width:100%;border-bottom:1px solid black; margin:0;">
                                 <div class="col-8" style="padding:4px; border-right:1px solid black;">
                                     <span><strong>Exporter</strong></span><br/>
                                     <strong><t t-esc="sale_order.company_id.partner_id.name or ''"/></strong><br/>
@@ -84,7 +84,7 @@
                             </div>
 
                             <!-- Consignee Details block -->
-                            <div class="row">
+                            <div class="row" style="margin:0;">
                                 <div class="col-4" style="border-right:1px solid black; padding:4px;">
                                     <strong>CONSIGNED TO :</strong><br/>
                                     <t t-esc="sale_order.consignee_id.name or ''"/><br/>
@@ -116,7 +116,7 @@
                             </div>
 
                             <!-- Country details -->
-                            <div class="row" style="border-top:1px solid black; text-align:center;">
+                            <div class="row" style="border-top:1px solid black; text-align:center; margin:0;">
                                 <div class="col-3" style="border-right:1px solid black; padding:4px;">
                                     <strong>COUNTRY OF ORIGIN</strong>
                                 </div>
@@ -130,7 +130,7 @@
                                     <strong>PORT OF DISCHARGE</strong>
                                 </div>
                             </div>
-                            <div class="row" style="border-top:1px solid black; text-align:center;">
+                            <div class="row" style="border-top:1px solid black; text-align:center; margin:0;">
                                 <div class="col-3" style="border-right:1px solid black; padding:4px;">
                                     <span t-esc="sale_order.country_of_origin or ''"/>
                                 </div>
@@ -146,7 +146,7 @@
                             </div>
                             
                             <!-- Table - Data from stock.picking move lines -->
-                            <table class="table table-sm o_main_table" style="width:100%;">
+                            <table class="table table-bordered table-sm o_main_table" style="width:100%;">
                                 <thead>
                                     <tr style="text-align: center;">
                                         <th class="text-center" style="width: 8%;vertical-align:center;font-weight:bold;">Marks &amp; Nos</th>
@@ -159,7 +159,7 @@
                                         <th class="text-center" style="width: 6%;vertical-align:center;font-weight:bold;">Quantity in Unit</th>
                                         <th class="text-center" style="width: 6%;vertical-align:center;font-weight:bold;">Net wt.in KGs per box</th>
                                         <th class="text-center" style="width: 6%;vertical-align:center;font-weight:bold;">Gross wt.in KGs per box</th>
-                                        <th class="text-center" style="width: 6%;vertical-align:center;font-weight:bold;">Dimensions in MM</th>
+                                        <th class="text-center" style="width: 6%;vertical-align:center;font-weight:bold; border-right:none;">Dimensions in MM</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -312,7 +312,7 @@
                             </table>
 
                             <!-- Company ID's block -->
-                            <div class="row" style="margin-top: 10px;">
+                            <div class="row" style="margin-top: 10px; margin:0;">
                                 <div class="col-3" style="padding:4px; white-space:nowrap;">
                                     <strong>LUT ARN:</strong>
                                     <span t-esc="sale_order.company_id.lut_arn or ''"/>
@@ -332,7 +332,7 @@
                             </div>
 
                             <!-- Remarks Block -->
-                            <div class="row" style="margin-top:10px; text-align:left; border-bottom:1px solid black; border-top:1px solid black;">
+                            <div class="row" style="margin-top:10px; text-align:left; border-bottom:1px solid black; border-top:1px solid black;margin:0;">
                                 <div class="col-8" style="padding:4px;">
                                     <strong>Remarks:</strong><br/>
                                     <!-- <span t-field="sale_order.note"/> -->
@@ -342,7 +342,7 @@
                                     <strong>Declaration:</strong><br/>
                                     <span>We declare that this invoice shows the actual price of the goods and all particulars are true and correct.</span>
                                 </div>
-                                <div class="col-4" style="padding:4px; text-align:right;">
+                                <div class="col-4" style="padding:4px; text-align:right;border-left:1px solid black;">
                                     <strong>FOR, Ubik Solutions Pvt. Ltd.</strong><br/><br/><br/><br/><br/>
                                     <strong>Authorised Signatory</strong>
                                 </div>

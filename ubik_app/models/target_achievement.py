@@ -1,5 +1,8 @@
 from odoo import models, fields, tools, api
 from datetime import date
+import logging
+
+_logger = logging.getLogger(__name__)
 
 # ------------------------------------------------------------------
 # Territory Monthly Target (UNCHANGED – REQUIRED)
@@ -54,6 +57,7 @@ class MrTargetAchievementQuarterlyReport(models.Model):
     _name = 'mr.target.achievement.quarterly.report'
     _description = 'Target vs Achievement Quarterly Report'
     _auto = False
+    _rec_name = 'mr_id'
 
     territory_id = fields.Many2one('territory.name', readonly=True)
     mr_id = fields.Many2one('res.users', string="MR Name", readonly=True)
@@ -77,31 +81,6 @@ class MrTargetAchievementQuarterlyReport(models.Model):
 
             rec.yearly_target = target.yearly_target if target else 0.0
 
-    # Old code for inverse method without audit logging starts here
-    # def _inverse_yearly_target(self):
-    #     Target = self.env['mr.target.achievement.yearly.target']
-
-    #     for rec in self:
-    #         target = Target.search([
-    #             ('territory_id', '=', rec.territory_id.id),
-    #             ('mr_id', '=', rec.mr_id.id),
-    #             ('category_id', '=', rec.category_id.id),
-    #             ('fiscal_year', '=', rec.fiscal_year),
-    #         ], limit=1)
-
-    #         if target:
-    #             target.yearly_target = rec.yearly_target
-    #         else:
-    #             Target.create({
-    #                 'territory_id': rec.territory_id.id,
-    #                 'mr_id': rec.mr_id.id,
-    #                 'category_id': rec.category_id.id,
-    #                 'fiscal_year': rec.fiscal_year,
-    #                 'yearly_target': rec.yearly_target,
-    #             })
-    # Old code for inverse method without audit logging ends here
-
-    # New code to add audit log for changes in yearly target starts here
     def _inverse_yearly_target(self):
         for rec in self:
             target = self.env['mr.target.achievement.yearly.target'].search([
@@ -124,7 +103,7 @@ class MrTargetAchievementQuarterlyReport(models.Model):
             else:
                 target.yearly_target = rec.yearly_target
 
-            # 🔹 AUDIT LOG
+            # AUDIT LOG
             if old != rec.yearly_target:
                 self.env['mr.target.audit.log'].create({
                     'user_id': self.env.user.id,
@@ -136,7 +115,6 @@ class MrTargetAchievementQuarterlyReport(models.Model):
                     'old_value': old,
                     'new_value': rec.yearly_target,
                 })
-    # New code to add audit log for changes in yearly target ends here
     
     # ================= MONTHLY TARGETS (EDITABLE) =================
     def _get_month_target(self, month):
@@ -145,24 +123,7 @@ class MrTargetAchievementQuarterlyReport(models.Model):
             ('fiscal_year', '=', self.fiscal_year),
             ('month', '=', month),
         ], limit=1)
-    
 
-    #### Old code for setting month target without audit log starts here
-    # def _set_month_target(self, month, value):
-    #     Target = self.env['mr.territory.target']
-    #     t = self._get_month_target(month)
-    #     if t:
-    #         t.target_amount = value
-    #     else:
-    #         Target.create({
-    #             'territory_id': self.territory_id.id,
-    #             'fiscal_year': self.fiscal_year,
-    #             'month': month,
-    #             'target_amount': value,
-    #         })
-    #### Old code for setting month target without audit log ends here
-
-    # New code to set month target with audit log starts here
     def _set_month_target(self, month, value):
         Target = self.env['mr.territory.target']
         t = self._get_month_target(month)
@@ -191,7 +152,6 @@ class MrTargetAchievementQuarterlyReport(models.Model):
                 'old_value': old_value,
                 'new_value': value,
             })
-    # New code to set month target with audit log ends here
 
     def _make_month_fields(month):
         def compute(self):
@@ -206,84 +166,72 @@ class MrTargetAchievementQuarterlyReport(models.Model):
         return compute, inverse
     
     MONTH_LABELS = {
-    '04': 'Apr Tgt',
-    '05': 'May Tgt',
-    '06': 'Jun Tgt',
-    '07': 'Jul Tgt',
-    '08': 'Aug Tgt',
-    '09': 'Sep Tgt',
-    '10': 'Oct Tgt',
-    '11': 'Nov Tgt',
-    '12': 'Dec Tgt',
-    '01': 'Jan Tgt',
-    '02': 'Feb Tgt',
-    '03': 'Mar Tgt',}
-
+        '04': 'Apr Tgt',
+        '05': 'May Tgt',
+        '06': 'Jun Tgt',
+        '07': 'Jul Tgt',
+        '08': 'Aug Tgt',
+        '09': 'Sep Tgt',
+        '10': 'Oct Tgt',
+        '11': 'Nov Tgt',
+        '12': 'Dec Tgt',
+        '01': 'Jan Tgt',
+        '02': 'Feb Tgt',
+        '03': 'Mar Tgt',
+    }
 
     for m, label in MONTH_LABELS.items():
         c, i = _make_month_fields(m)
         locals()[f'{m}_tgt'] = fields.Float(string=label, compute=c, inverse=i, readonly=False)
     
     # ---------------- Q1 ----------------
-    # apr_tgt = fields.Float(readonly=True)
     apr_ach = fields.Float(readonly=True)
     apr_sur_def = fields.Float(readonly=True)
     apr_pct = fields.Float(readonly=True)
 
-    # may_tgt = fields.Float(readonly=True)
     may_ach = fields.Float(readonly=True)
     may_sur_def = fields.Float(readonly=True)
     may_pct = fields.Float(readonly=True)
 
-    # jun_tgt = fields.Float(readonly=True)
     jun_ach = fields.Float(readonly=True)
     jun_sur_def = fields.Float(readonly=True)
     jun_pct = fields.Float(readonly=True)
 
     # ---------------- Q2 ----------------
-    # jul_tgt = fields.Float(readonly=True)
     jul_ach = fields.Float(readonly=True)
     jul_sur_def = fields.Float(readonly=True)
     jul_pct = fields.Float(readonly=True)
 
-    # aug_tgt = fields.Float(readonly=True)
     aug_ach = fields.Float(readonly=True)
     aug_sur_def = fields.Float(readonly=True)
     aug_pct = fields.Float(readonly=True)
 
-    # sep_tgt = fields.Float(readonly=True)
     sep_ach = fields.Float(readonly=True)
     sep_sur_def = fields.Float(readonly=True)
     sep_pct = fields.Float(readonly=True)
 
     # ---------------- Q3 ----------------
-    # oct_tgt = fields.Float(readonly=True)
     oct_ach = fields.Float(readonly=True)
     oct_sur_def = fields.Float(readonly=True)
     oct_pct = fields.Float(readonly=True)
 
-    # nov_tgt = fields.Float(readonly=True)
     nov_ach = fields.Float(readonly=True)
     nov_sur_def = fields.Float(readonly=True)
     nov_pct = fields.Float(readonly=True)
 
-    # dec_tgt = fields.Float(readonly=True)
     dec_ach = fields.Float(readonly=True)
     dec_sur_def = fields.Float(readonly=True)
     dec_pct = fields.Float(readonly=True)
 
     # ---------------- Q4 ----------------
-    # jan_tgt = fields.Float(readonly=True)
     jan_ach = fields.Float(readonly=True)
     jan_sur_def = fields.Float(readonly=True)
     jan_pct = fields.Float(readonly=True)
 
-    # feb_tgt = fields.Float(readonly=True)
     feb_ach = fields.Float(readonly=True)
     feb_sur_def = fields.Float(readonly=True)
     feb_pct = fields.Float(readonly=True)
 
-    # mar_tgt = fields.Float(readonly=True)
     mar_ach = fields.Float(readonly=True)
     mar_sur_def = fields.Float(readonly=True)
     mar_pct = fields.Float(readonly=True)
@@ -315,7 +263,6 @@ class MrTargetAchievementQuarterlyReport(models.Model):
     fy_sur_def = fields.Float(readonly=True)
     fy_pct = fields.Float(readonly=True)
 
-    # New code to add button action for viewing change history
     def action_view_change_history(self):
         self.ensure_one()
         return {
@@ -332,15 +279,16 @@ class MrTargetAchievementQuarterlyReport(models.Model):
             ],
             'context': {'create': False},
         }
-    # New code for button action to show change history ends here
 
     def init(self):
+        _logger.info("CREATING VIEW mr_target_achievement_quarterly_report")
         tools.drop_view_if_exists(self.env.cr, self._table)
 
+        # Optimized query with safe numeric conversion
         self.env.cr.execute("""
-            CREATE VIEW mr_target_achievement_quarterly_report AS (
+            CREATE OR REPLACE VIEW mr_target_achievement_quarterly_report AS (
                 SELECT
-                    row_number() OVER () AS id,
+                    ROW_NUMBER() OVER (ORDER BY fy.territory_id, fy.mr_id, fy.category_id, fy.fiscal_year) AS id,
                     fy.territory_id,
                     fy.mr_id,
                     fy.category_id,
@@ -360,207 +308,178 @@ class MrTargetAchievementQuarterlyReport(models.Model):
                     END AS is_current_fy,
 
                     /* APR */
-                    SUM(CASE WHEN fy.mm='04' THEN t.target_amount ELSE 0 END) AS apr_tgt,
-                    SUM(CASE WHEN fy.mm='04' THEN fy.amt ELSE 0 END) AS apr_ach,
-                    SUM(CASE WHEN fy.mm='04' THEN fy.amt ELSE 0 END)
-                      - SUM(CASE WHEN fy.mm='04' THEN t.target_amount ELSE 0 END) AS apr_sur_def,
-                    ROUND(
-                            (
-                            SUM(CASE WHEN fy.mm='04' THEN fy.amt ELSE 0 END)
-                          / NULLIF(SUM(CASE WHEN fy.mm='04' THEN t.target_amount ELSE 0 END),0) 
-                          * 100
-                        )::numeric, 2
-                    ) AS apr_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm='04' THEN t.target_amount ELSE 0 END), 0) AS apr_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm='04' THEN fy.amt ELSE 0 END), 0) AS apr_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm='04' THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm='04' THEN t.target_amount ELSE 0 END), 0) AS apr_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm='04' THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm='04' THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm='04' THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS apr_pct,
 
                     /* MAY */
-                    SUM(CASE WHEN fy.mm='05' THEN t.target_amount ELSE 0 END) AS may_tgt,
-                    SUM(CASE WHEN fy.mm='05' THEN fy.amt ELSE 0 END) AS may_ach,
-                    SUM(CASE WHEN fy.mm='05' THEN fy.amt ELSE 0 END)
-                      - SUM(CASE WHEN fy.mm='05' THEN t.target_amount ELSE 0 END) AS may_sur_def,
-                    ROUND((SUM(CASE WHEN fy.mm='05' THEN fy.amt ELSE 0 END)
-                          / NULLIF(SUM(CASE WHEN fy.mm='05' THEN t.target_amount ELSE 0 END),0) 
-                          * 100
-                        )::numeric, 2
-                    ) AS may_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm='05' THEN t.target_amount ELSE 0 END), 0) AS may_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm='05' THEN fy.amt ELSE 0 END), 0) AS may_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm='05' THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm='05' THEN t.target_amount ELSE 0 END), 0) AS may_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm='05' THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm='05' THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm='05' THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS may_pct,
 
                     /* JUN */
-                    SUM(CASE WHEN fy.mm='06' THEN t.target_amount ELSE 0 END) AS jun_tgt,
-                    SUM(CASE WHEN fy.mm='06' THEN fy.amt ELSE 0 END) AS jun_ach,
-                    SUM(CASE WHEN fy.mm='06' THEN fy.amt ELSE 0 END)
-                      - SUM(CASE WHEN fy.mm='06' THEN t.target_amount ELSE 0 END) AS jun_sur_def,
-                    ROUND((SUM(CASE WHEN fy.mm='06' THEN fy.amt ELSE 0 END)
-                          / NULLIF(SUM(CASE WHEN fy.mm='06' THEN t.target_amount ELSE 0 END),0) 
-                          * 100
-                        )::numeric, 2
-                    ) AS jun_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm='06' THEN t.target_amount ELSE 0 END), 0) AS jun_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm='06' THEN fy.amt ELSE 0 END), 0) AS jun_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm='06' THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm='06' THEN t.target_amount ELSE 0 END), 0) AS jun_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm='06' THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm='06' THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm='06' THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS jun_pct,
 
                     /* JUL */
-                    SUM(CASE WHEN fy.mm='07' THEN t.target_amount ELSE 0 END) AS jul_tgt,
-                    SUM(CASE WHEN fy.mm='07' THEN fy.amt ELSE 0 END) AS jul_ach,
-                    SUM(CASE WHEN fy.mm='07' THEN fy.amt ELSE 0 END)
-                      - SUM(CASE WHEN fy.mm='07' THEN t.target_amount ELSE 0 END) AS jul_sur_def,
-                    ROUND((SUM(CASE WHEN fy.mm='07' THEN fy.amt ELSE 0 END)
-                          / NULLIF(SUM(CASE WHEN fy.mm='07' THEN t.target_amount ELSE 0 END),0) 
-                          * 100
-                        )::numeric, 2
-                    ) AS jul_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm='07' THEN t.target_amount ELSE 0 END), 0) AS jul_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm='07' THEN fy.amt ELSE 0 END), 0) AS jul_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm='07' THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm='07' THEN t.target_amount ELSE 0 END), 0) AS jul_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm='07' THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm='07' THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm='07' THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS jul_pct,
 
                     /* AUG */
-                    SUM(CASE WHEN fy.mm='08' THEN t.target_amount ELSE 0 END) AS aug_tgt,
-                    SUM(CASE WHEN fy.mm='08' THEN fy.amt ELSE 0 END) AS aug_ach,
-                    SUM(CASE WHEN fy.mm='08' THEN fy.amt ELSE 0 END)
-                      - SUM(CASE WHEN fy.mm='08' THEN t.target_amount ELSE 0 END) AS aug_sur_def,
-                    ROUND((SUM(CASE WHEN fy.mm='08' THEN fy.amt ELSE 0 END)
-                          / NULLIF(SUM(CASE WHEN fy.mm='08' THEN t.target_amount ELSE 0 END),0) 
-                          * 100
-                        )::numeric, 2
-                    ) AS aug_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm='08' THEN t.target_amount ELSE 0 END), 0) AS aug_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm='08' THEN fy.amt ELSE 0 END), 0) AS aug_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm='08' THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm='08' THEN t.target_amount ELSE 0 END), 0) AS aug_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm='08' THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm='08' THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm='08' THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS aug_pct,
 
                     /* SEP */
-                    SUM(CASE WHEN fy.mm='09' THEN t.target_amount ELSE 0 END) AS sep_tgt,
-                    SUM(CASE WHEN fy.mm='09' THEN fy.amt ELSE 0 END) AS sep_ach,
-                    SUM(CASE WHEN fy.mm='09' THEN fy.amt ELSE 0 END)
-                      - SUM(CASE WHEN fy.mm='09' THEN t.target_amount ELSE 0 END) AS sep_sur_def,
-                    ROUND((SUM(CASE WHEN fy.mm='09' THEN fy.amt ELSE 0 END)
-                          / NULLIF(SUM(CASE WHEN fy.mm='09' THEN t.target_amount ELSE 0 END),0) 
-                          * 100
-                        )::numeric, 2
-                    ) AS sep_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm='09' THEN t.target_amount ELSE 0 END), 0) AS sep_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm='09' THEN fy.amt ELSE 0 END), 0) AS sep_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm='09' THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm='09' THEN t.target_amount ELSE 0 END), 0) AS sep_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm='09' THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm='09' THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm='09' THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS sep_pct,
                             
                     /* OCT */
-                    SUM(CASE WHEN fy.mm='10' THEN t.target_amount ELSE 0 END) AS oct_tgt,
-                    SUM(CASE WHEN fy.mm='10' THEN fy.amt ELSE 0 END) AS oct_ach,
-                    SUM(CASE WHEN fy.mm='10' THEN fy.amt ELSE 0 END)
-                      - SUM(CASE WHEN fy.mm='10' THEN t.target_amount ELSE 0 END) AS oct_sur_def,
-                    ROUND((SUM(CASE WHEN fy.mm='10' THEN fy.amt ELSE 0 END)
-                          / NULLIF(SUM(CASE WHEN fy.mm='10' THEN t.target_amount ELSE 0 END),0) 
-                          * 100
-                        )::numeric, 2
-                    ) AS oct_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm='10' THEN t.target_amount ELSE 0 END), 0) AS oct_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm='10' THEN fy.amt ELSE 0 END), 0) AS oct_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm='10' THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm='10' THEN t.target_amount ELSE 0 END), 0) AS oct_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm='10' THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm='10' THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm='10' THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS oct_pct,
                     
                     /* NOV */
-                    SUM(CASE WHEN fy.mm='11' THEN t.target_amount ELSE 0 END) AS nov_tgt,
-                    SUM(CASE WHEN fy.mm='11' THEN fy.amt ELSE 0 END) AS nov_ach,
-                    SUM(CASE WHEN fy.mm='11' THEN fy.amt ELSE 0 END)
-                      - SUM(CASE WHEN fy.mm='11' THEN t.target_amount ELSE 0 END) AS nov_sur_def,
-                    ROUND((SUM(CASE WHEN fy.mm='11' THEN fy.amt ELSE 0 END)
-                          / NULLIF(SUM(CASE WHEN fy.mm='11' THEN t.target_amount ELSE 0 END),0) 
-                          * 100
-                        )::numeric, 2
-                    ) AS nov_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm='11' THEN t.target_amount ELSE 0 END), 0) AS nov_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm='11' THEN fy.amt ELSE 0 END), 0) AS nov_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm='11' THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm='11' THEN t.target_amount ELSE 0 END), 0) AS nov_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm='11' THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm='11' THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm='11' THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS nov_pct,
                     
                     /* DEC */
-                    SUM(CASE WHEN fy.mm='12' THEN t.target_amount ELSE 0 END) AS dec_tgt,
-                    SUM(CASE WHEN fy.mm='12' THEN fy.amt ELSE 0 END) AS dec_ach,
-                    SUM(CASE WHEN fy.mm='12' THEN fy.amt ELSE 0 END)
-                      - SUM(CASE WHEN fy.mm='12' THEN t.target_amount ELSE 0 END) AS dec_sur_def,
-                    ROUND((SUM(CASE WHEN fy.mm='12' THEN fy.amt ELSE 0 END)
-                          / NULLIF(SUM(CASE WHEN fy.mm='12' THEN t.target_amount ELSE 0 END),0) 
-                          * 100
-                        )::numeric, 2
-                    ) AS dec_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm='12' THEN t.target_amount ELSE 0 END), 0) AS dec_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm='12' THEN fy.amt ELSE 0 END), 0) AS dec_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm='12' THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm='12' THEN t.target_amount ELSE 0 END), 0) AS dec_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm='12' THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm='12' THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm='12' THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS dec_pct,
                             
                     /* JAN */
-                    SUM(CASE WHEN fy.mm='01' THEN t.target_amount ELSE 0 END) AS jan_tgt,
-                    SUM(CASE WHEN fy.mm='01' THEN fy.amt ELSE 0 END) AS jan_ach,
-                    SUM(CASE WHEN fy.mm='01' THEN fy.amt ELSE 0 END)
-                      - SUM(CASE WHEN fy.mm='01' THEN t.target_amount ELSE 0 END) AS jan_sur_def,
-                    ROUND((SUM(CASE WHEN fy.mm='01' THEN fy.amt ELSE 0 END)
-                          / NULLIF(SUM(CASE WHEN fy.mm='01' THEN t.target_amount ELSE 0 END),0) 
-                          * 100
-                        )::numeric, 2
-                    ) AS jan_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm='01' THEN t.target_amount ELSE 0 END), 0) AS jan_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm='01' THEN fy.amt ELSE 0 END), 0) AS jan_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm='01' THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm='01' THEN t.target_amount ELSE 0 END), 0) AS jan_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm='01' THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm='01' THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm='01' THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS jan_pct,
                     
                     /* FEB */
-                    SUM(CASE WHEN fy.mm='02' THEN t.target_amount ELSE 0 END) AS feb_tgt,
-                    SUM(CASE WHEN fy.mm='02' THEN fy.amt ELSE 0 END) AS feb_ach,
-                    SUM(CASE WHEN fy.mm='02' THEN fy.amt ELSE 0 END)
-                      - SUM(CASE WHEN fy.mm='02' THEN t.target_amount ELSE 0 END) AS feb_sur_def,
-                    ROUND((SUM(CASE WHEN fy.mm='02' THEN fy.amt ELSE 0 END)
-                          / NULLIF(SUM(CASE WHEN fy.mm='02' THEN t.target_amount ELSE 0 END),0) 
-                          * 100
-                        )::numeric, 2
-                    ) AS feb_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm='02' THEN t.target_amount ELSE 0 END), 0) AS feb_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm='02' THEN fy.amt ELSE 0 END), 0) AS feb_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm='02' THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm='02' THEN t.target_amount ELSE 0 END), 0) AS feb_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm='02' THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm='02' THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm='02' THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS feb_pct,
                             
                     /* MAR */
-                    SUM(CASE WHEN fy.mm='03' THEN t.target_amount ELSE 0 END) AS mar_tgt,
-                    SUM(CASE WHEN fy.mm='03' THEN fy.amt ELSE 0 END) AS mar_ach,
-                    SUM(CASE WHEN fy.mm='03' THEN fy.amt ELSE 0 END)
-                      - SUM(CASE WHEN fy.mm='03' THEN t.target_amount ELSE 0 END) AS mar_sur_def,
-                    ROUND((SUM(CASE WHEN fy.mm='03' THEN fy.amt ELSE 0 END)
-                          / NULLIF(SUM(CASE WHEN fy.mm='03' THEN t.target_amount ELSE 0 END),0) 
-                          * 100
-                        )::numeric, 2
-                    ) AS mar_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm='03' THEN t.target_amount ELSE 0 END), 0) AS mar_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm='03' THEN fy.amt ELSE 0 END), 0) AS mar_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm='03' THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm='03' THEN t.target_amount ELSE 0 END), 0) AS mar_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm='03' THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm='03' THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm='03' THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS mar_pct,
                             
                     /* ================= Q1 (APR–JUN) ================= */
-                    SUM(CASE WHEN fy.mm IN ('04','05','06') THEN t.target_amount ELSE 0 END) AS q1_tgt,
-                    SUM(CASE WHEN fy.mm IN ('04','05','06') THEN fy.amt ELSE 0 END) AS q1_ach,
-                    SUM(CASE WHEN fy.mm IN ('04','05','06') THEN fy.amt ELSE 0 END)
-                    - SUM(CASE WHEN fy.mm IN ('04','05','06') THEN t.target_amount ELSE 0 END) AS q1_sur_def,
-                    ROUND(
-                        (
-                            SUM(CASE WHEN fy.mm IN ('04','05','06') THEN fy.amt ELSE 0 END)
-                            / NULLIF(SUM(CASE WHEN fy.mm IN ('04','05','06') THEN t.target_amount ELSE 0 END), 0)
-                            * 100
-                        )::numeric, 2
-                    ) AS q1_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm IN ('04','05','06') THEN t.target_amount ELSE 0 END), 0) AS q1_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm IN ('04','05','06') THEN fy.amt ELSE 0 END), 0) AS q1_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm IN ('04','05','06') THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm IN ('04','05','06') THEN t.target_amount ELSE 0 END), 0) AS q1_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm IN ('04','05','06') THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm IN ('04','05','06') THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm IN ('04','05','06') THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS q1_pct,
 
                     /* ================= Q2 (JUL–SEP) ================= */
-                    SUM(CASE WHEN fy.mm IN ('07','08','09') THEN t.target_amount ELSE 0 END) AS q2_tgt,
-                    SUM(CASE WHEN fy.mm IN ('07','08','09') THEN fy.amt ELSE 0 END) AS q2_ach,
-                    SUM(CASE WHEN fy.mm IN ('07','08','09') THEN fy.amt ELSE 0 END)
-                    - SUM(CASE WHEN fy.mm IN ('07','08','09') THEN t.target_amount ELSE 0 END) AS q2_sur_def,
-                    ROUND(
-                        (
-                            SUM(CASE WHEN fy.mm IN ('07','08','09') THEN fy.amt ELSE 0 END)
-                            / NULLIF(SUM(CASE WHEN fy.mm IN ('07','08','09') THEN t.target_amount ELSE 0 END), 0)
-                            * 100
-                        )::numeric, 2
-                    ) AS q2_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm IN ('07','08','09') THEN t.target_amount ELSE 0 END), 0) AS q2_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm IN ('07','08','09') THEN fy.amt ELSE 0 END), 0) AS q2_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm IN ('07','08','09') THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm IN ('07','08','09') THEN t.target_amount ELSE 0 END), 0) AS q2_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm IN ('07','08','09') THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm IN ('07','08','09') THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm IN ('07','08','09') THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS q2_pct,
 
                     /* ================= Q3 (OCT–DEC) ================= */
-                    SUM(CASE WHEN fy.mm IN ('10','11','12') THEN t.target_amount ELSE 0 END) AS q3_tgt,
-                    SUM(CASE WHEN fy.mm IN ('10','11','12') THEN fy.amt ELSE 0 END) AS q3_ach,
-                    SUM(CASE WHEN fy.mm IN ('10','11','12') THEN fy.amt ELSE 0 END)
-                    - SUM(CASE WHEN fy.mm IN ('10','11','12') THEN t.target_amount ELSE 0 END) AS q3_sur_def,
-                    ROUND(
-                        (
-                            SUM(CASE WHEN fy.mm IN ('10','11','12') THEN fy.amt ELSE 0 END)
-                            / NULLIF(SUM(CASE WHEN fy.mm IN ('10','11','12') THEN t.target_amount ELSE 0 END), 0)
-                            * 100
-                        )::numeric, 2
-                    ) AS q3_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm IN ('10','11','12') THEN t.target_amount ELSE 0 END), 0) AS q3_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm IN ('10','11','12') THEN fy.amt ELSE 0 END), 0) AS q3_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm IN ('10','11','12') THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm IN ('10','11','12') THEN t.target_amount ELSE 0 END), 0) AS q3_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm IN ('10','11','12') THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm IN ('10','11','12') THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm IN ('10','11','12') THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS q3_pct,
 
                     /* ================= Q4 (JAN–MAR) ================= */
-                    SUM(CASE WHEN fy.mm IN ('01','02','03') THEN t.target_amount ELSE 0 END) AS q4_tgt,
-                    SUM(CASE WHEN fy.mm IN ('01','02','03') THEN fy.amt ELSE 0 END) AS q4_ach,
-                    SUM(CASE WHEN fy.mm IN ('01','02','03') THEN fy.amt ELSE 0 END)
-                    - SUM(CASE WHEN fy.mm IN ('01','02','03') THEN t.target_amount ELSE 0 END) AS q4_sur_def,
-                    ROUND(
-                        (
-                            SUM(CASE WHEN fy.mm IN ('01','02','03') THEN fy.amt ELSE 0 END)
-                            / NULLIF(SUM(CASE WHEN fy.mm IN ('01','02','03') THEN t.target_amount ELSE 0 END), 0)
-                            * 100
-                        )::numeric, 2
-                    ) AS q4_pct,
+                    COALESCE(SUM(CASE WHEN fy.mm IN ('01','02','03') THEN t.target_amount ELSE 0 END), 0) AS q4_tgt,
+                    COALESCE(SUM(CASE WHEN fy.mm IN ('01','02','03') THEN fy.amt ELSE 0 END), 0) AS q4_ach,
+                    COALESCE(SUM(CASE WHEN fy.mm IN ('01','02','03') THEN fy.amt ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN fy.mm IN ('01','02','03') THEN t.target_amount ELSE 0 END), 0) AS q4_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(CASE WHEN fy.mm IN ('01','02','03') THEN t.target_amount ELSE 0 END), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(CASE WHEN fy.mm IN ('01','02','03') THEN fy.amt ELSE 0 END), 0) / NULLIF(COALESCE(SUM(CASE WHEN fy.mm IN ('01','02','03') THEN t.target_amount ELSE 0 END), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS q4_pct,
 
-                            
                     /* FY */
-                    SUM(t.target_amount) AS fy_tgt,
-                    SUM(fy.amt) AS fy_ach,
-                    SUM(fy.amt) - SUM(t.target_amount) AS fy_sur_def,
-                    ROUND(
-                        (
-                            SUM(fy.amt)
-                            / NULLIF(SUM(t.target_amount), 0)
-                            * 100
-                        )::numeric, 2
-                    ) AS fy_pct
+                    COALESCE(SUM(t.target_amount), 0) AS fy_tgt,
+                    COALESCE(SUM(fy.amt), 0) AS fy_ach,
+                    COALESCE(SUM(fy.amt), 0) - COALESCE(SUM(t.target_amount), 0) AS fy_sur_def,
+                    CASE 
+                        WHEN COALESCE(SUM(t.target_amount), 0) != 0 
+                        THEN ROUND((COALESCE(SUM(fy.amt), 0) / NULLIF(COALESCE(SUM(t.target_amount), 0), 0) * 100)::numeric, 2)
+                        ELSE 0 
+                    END AS fy_pct
 
                 FROM (
                     SELECT
-                        l.amount AS amt,
+                        COALESCE(NULLIF(l.amount::text, 'NaN')::numeric, 0) AS amt,
                         l.category_id,
                         d.territory_id,
                         SUBSTRING(l.month, 6, 2) AS mm,
@@ -582,9 +501,10 @@ class MrTargetAchievementQuarterlyReport(models.Model):
                         ) AS fiscal_year,
                         d.mr_id
                     FROM mr_doctor_line l
-                    JOIN mr_doctor d ON d.id = l.mr_doctor_id
+                    INNER JOIN mr_doctor d ON d.id = l.mr_doctor_id
+                    WHERE l.amount IS NOT NULL AND l.amount != 0
                 ) fy
-               LEFT JOIN mr_territory_target t
+                LEFT JOIN mr_territory_target t
                     ON t.territory_id = fy.territory_id
                     AND t.month = fy.mm
                     AND t.fiscal_year = fy.fiscal_year
@@ -597,7 +517,6 @@ class MrTargetAchievementQuarterlyReport(models.Model):
             )
         """)
 
-# New code to add tracking functionality for changes in targets
 class MrTargetAuditLog(models.Model):
     _name = 'mr.target.audit.log'
     _description = 'Target Change History'

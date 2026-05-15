@@ -66,7 +66,7 @@ class UserController(http.Controller):
             #         "message": "Only MR users are allowed to generate API token"
             #     }), content_type='application/json')
 
-            allowed_roles = ['MR', 'ASM', 'RSM']
+            allowed_roles = ['MR', 'ASM', 'RSM', 'ZSM']
 
             if not employee.job_id or employee.job_id.name not in allowed_roles:
                 return Response(json.dumps({

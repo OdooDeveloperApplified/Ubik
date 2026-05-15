@@ -1,30 +1,17 @@
 from odoo import models, fields, tools
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class MrDoctorSalesReport(models.Model):
     _name = 'mr.doctor.sales.report'
     _description = 'Doctor Wise Sales Report'
     _auto = False
-    
-    ########### Code to show the top sales doctorwise in excel sheet when exporting data:starts ##################
-    def read_group(
-        self, domain, fields, groupby,
-        offset=0, limit=None, orderby=False, lazy=True
-    ):
-        # Force total amount DESC for grouped results & exports
-        if not orderby:
-            orderby = 'amount:sum desc'
+    _rec_name = 'doctor_id'  # Add a rec_name for better handling
 
-        return super().read_group(
-            domain=domain,
-            fields=fields,
-            groupby=groupby,
-            offset=offset,
-            limit=limit,
-            orderby=orderby,
-            lazy=lazy
-        )
-    ########### Code to show the top sales doctorwise in excel sheet when exporting data:ends ##################
-  
+    # Remove the problematic read_group override - it's causing issues
+    # The default_order in the tree view is sufficient
+
     # Code to delete record
     def unlink(self):
         for rec in self:
@@ -83,27 +70,15 @@ class MrDoctorSalesReport(models.Model):
     amount = fields.Float(string="Total Amount", readonly=True)
 
     def init(self):
+        _logger.info("CREATING VIEW mr_doctor_sales_report")
         tools.drop_view_if_exists(self.env.cr, self._table)
+        
+        # Optimized query using CTE approach similar to your working reference
         self.env.cr.execute("""
         CREATE OR REPLACE VIEW mr_doctor_sales_report AS (
-            SELECT
-                t.*,
-                CASE
-                    WHEN t.year = (
-                        CASE
-                            WHEN EXTRACT(MONTH FROM CURRENT_DATE) >= 4 THEN
-                                EXTRACT(YEAR FROM CURRENT_DATE)::TEXT || '-' ||
-                                RIGHT((EXTRACT(YEAR FROM CURRENT_DATE) + 1)::TEXT, 2)
-                            ELSE
-                                (EXTRACT(YEAR FROM CURRENT_DATE) - 1)::TEXT || '-' ||
-                                RIGHT(EXTRACT(YEAR FROM CURRENT_DATE)::TEXT, 2)
-                        END
-                    )
-                    THEN TRUE ELSE FALSE
-                END AS is_current_fy
-            FROM (
+            WITH base AS (
                 SELECT
-                    MIN(line.id) AS id,
+                    line.id,
                     doc.mr_id,
                     doc.doctor_id,
                     doc.territory_id,
@@ -112,76 +87,100 @@ class MrDoctorSalesReport(models.Model):
                     line.product_id,
                     line.rate_type,
                     line.price_unit,
-
-                    (
-                        CASE
-                            WHEN EXTRACT(MONTH FROM TO_DATE(line.month, 'YYYY-MM')) >= 4
-                            THEN EXTRACT(YEAR FROM TO_DATE(line.month, 'YYYY-MM'))
-                            ELSE EXTRACT(YEAR FROM TO_DATE(line.month, 'YYYY-MM')) - 1
-                        END
-                    )::TEXT || '-' ||
-                    RIGHT(
-                        (
-                            CASE
-                                WHEN EXTRACT(MONTH FROM TO_DATE(line.month, 'YYYY-MM')) >= 4
-                                THEN EXTRACT(YEAR FROM TO_DATE(line.month, 'YYYY-MM')) + 1
-                                ELSE EXTRACT(YEAR FROM TO_DATE(line.month, 'YYYY-MM'))
-                            END
-                        )::TEXT, 2
-                    ) AS year,
-
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 4 THEN line.product_qty ELSE 0 END) AS apr_qty,
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 4 THEN line.amount ELSE 0 END) AS apr_amt,
-
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 5 THEN line.product_qty ELSE 0 END) AS may_qty,
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 5 THEN line.amount ELSE 0 END) AS may_amt,
-
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 6 THEN line.product_qty ELSE 0 END) AS jun_qty,
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 6 THEN line.amount ELSE 0 END) AS jun_amt,
-
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 7 THEN line.product_qty ELSE 0 END) AS jul_qty,
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 7 THEN line.amount ELSE 0 END) AS jul_amt,
-
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 8 THEN line.product_qty ELSE 0 END) AS aug_qty,
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 8 THEN line.amount ELSE 0 END) AS aug_amt,
-
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 9 THEN line.product_qty ELSE 0 END) AS sep_qty,
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 9 THEN line.amount ELSE 0 END) AS sep_amt,
-
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 10 THEN line.product_qty ELSE 0 END) AS oct_qty,
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 10 THEN line.amount ELSE 0 END) AS oct_amt,
-
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 11 THEN line.product_qty ELSE 0 END) AS nov_qty,
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 11 THEN line.amount ELSE 0 END) AS nov_amt,
-
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 12 THEN line.product_qty ELSE 0 END) AS dec_qty,
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 12 THEN line.amount ELSE 0 END) AS dec_amt,
-
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 1 THEN line.product_qty ELSE 0 END) AS jan_qty,
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 1 THEN line.amount ELSE 0 END) AS jan_amt,
-
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 2 THEN line.product_qty ELSE 0 END) AS feb_qty,
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 2 THEN line.amount ELSE 0 END) AS feb_amt,
-
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 3 THEN line.product_qty ELSE 0 END) AS mar_qty,
-                    SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(line.month,'YYYY-MM')) = 3 THEN line.amount ELSE 0 END) AS mar_amt,
-
-                    SUM(line.product_qty) AS product_qty,
-                    SUM(line.amount) AS amount
-
+                    
+                    -- Safe numeric conversion for quantity and amount
+                    COALESCE(NULLIF(line.product_qty::text, 'NaN')::numeric, 0) AS product_qty,
+                    COALESCE(NULLIF(line.amount::text, 'NaN')::numeric, 0) AS amount,
+                    
+                    -- Precompute date
+                    TO_DATE(line.month, 'YYYY-MM') AS month_date
+                    
                 FROM mr_doctor_line line
-                JOIN mr_doctor doc ON doc.id = line.mr_doctor_id
-                JOIN res_partner rp ON rp.id = doc.doctor_id
-                GROUP BY
-                    doc.mr_id,
-                    doc.doctor_id,
-                    doc.territory_id,
-                    rp.doc_unique_id,
-                    line.category_id,
-                    line.product_id,
-                    line.rate_type,
-                    line.price_unit,
-                    year
-            ) t
+                INNER JOIN mr_doctor doc ON doc.id = line.mr_doctor_id
+                INNER JOIN res_partner rp ON rp.id = doc.doctor_id
+                WHERE line.product_qty IS NOT NULL  -- Filter out null rows for performance
+            ),
+            
+            final AS (
+                SELECT
+                    *,
+                    EXTRACT(MONTH FROM month_date) AS month_num,
+                    
+                    CASE
+                        WHEN EXTRACT(MONTH FROM month_date) >= 4
+                            THEN EXTRACT(YEAR FROM month_date)
+                        ELSE EXTRACT(YEAR FROM month_date) - 1
+                    END AS fy_start
+                    
+                FROM base
+            )
+            
+            SELECT
+                MIN(id) AS id,
+                mr_id,
+                doctor_id,
+                territory_id,
+                doc_unique_id,
+                category_id,
+                product_id,
+                rate_type,
+                price_unit,
+                
+                -- Financial Year
+                fy_start::TEXT || '-' || RIGHT((fy_start + 1)::TEXT, 2) AS year,
+                
+                -- Current FY flag
+                (
+                    fy_start =
+                    CASE
+                        WHEN EXTRACT(MONTH FROM CURRENT_DATE) >= 4
+                            THEN EXTRACT(YEAR FROM CURRENT_DATE)
+                        ELSE EXTRACT(YEAR FROM CURRENT_DATE) - 1
+                    END
+                ) AS is_current_fy,
+                
+                -- Monthly Quantities
+                SUM(CASE WHEN month_num = 4 THEN product_qty ELSE 0 END) AS apr_qty,
+                SUM(CASE WHEN month_num = 5 THEN product_qty ELSE 0 END) AS may_qty,
+                SUM(CASE WHEN month_num = 6 THEN product_qty ELSE 0 END) AS jun_qty,
+                SUM(CASE WHEN month_num = 7 THEN product_qty ELSE 0 END) AS jul_qty,
+                SUM(CASE WHEN month_num = 8 THEN product_qty ELSE 0 END) AS aug_qty,
+                SUM(CASE WHEN month_num = 9 THEN product_qty ELSE 0 END) AS sep_qty,
+                SUM(CASE WHEN month_num = 10 THEN product_qty ELSE 0 END) AS oct_qty,
+                SUM(CASE WHEN month_num = 11 THEN product_qty ELSE 0 END) AS nov_qty,
+                SUM(CASE WHEN month_num = 12 THEN product_qty ELSE 0 END) AS dec_qty,
+                SUM(CASE WHEN month_num = 1 THEN product_qty ELSE 0 END) AS jan_qty,
+                SUM(CASE WHEN month_num = 2 THEN product_qty ELSE 0 END) AS feb_qty,
+                SUM(CASE WHEN month_num = 3 THEN product_qty ELSE 0 END) AS mar_qty,
+                
+                -- Monthly Amounts
+                SUM(CASE WHEN month_num = 4 THEN amount ELSE 0 END) AS apr_amt,
+                SUM(CASE WHEN month_num = 5 THEN amount ELSE 0 END) AS may_amt,
+                SUM(CASE WHEN month_num = 6 THEN amount ELSE 0 END) AS jun_amt,
+                SUM(CASE WHEN month_num = 7 THEN amount ELSE 0 END) AS jul_amt,
+                SUM(CASE WHEN month_num = 8 THEN amount ELSE 0 END) AS aug_amt,
+                SUM(CASE WHEN month_num = 9 THEN amount ELSE 0 END) AS sep_amt,
+                SUM(CASE WHEN month_num = 10 THEN amount ELSE 0 END) AS oct_amt,
+                SUM(CASE WHEN month_num = 11 THEN amount ELSE 0 END) AS nov_amt,
+                SUM(CASE WHEN month_num = 12 THEN amount ELSE 0 END) AS dec_amt,
+                SUM(CASE WHEN month_num = 1 THEN amount ELSE 0 END) AS jan_amt,
+                SUM(CASE WHEN month_num = 2 THEN amount ELSE 0 END) AS feb_amt,
+                SUM(CASE WHEN month_num = 3 THEN amount ELSE 0 END) AS mar_amt,
+                
+                -- Totals
+                SUM(product_qty) AS product_qty,
+                SUM(amount) AS amount
+                
+            FROM final
+            GROUP BY
+                mr_id,
+                doctor_id,
+                territory_id,
+                doc_unique_id,
+                category_id,
+                product_id,
+                rate_type,
+                price_unit,
+                fy_start
         )
         """)

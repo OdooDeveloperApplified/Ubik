@@ -4,39 +4,46 @@
         <field name="name">mr.doctor.sales.report.tree</field>
         <field name="model">mr.doctor.sales.report</field>
         <field name="arch" type="xml">
-            <list string="Doctor Wise Sales Report" default_order="amount desc" create="0">
+            <list string="Doctor Wise Sales Report" 
+                  default_order="amount desc" 
+                  create="0" 
+                  limit="200">
                 <field name="doc_unique_id"/>
                 <field name="doctor_id"/>
                 <field name="mr_id"/>
                 <field name="territory_id" optional="1"/>
                 <field name="category_id"/>
                 <field name="product_id"/>
-                <field name="rate_type"/>
-                <field name="price_unit"/>
-                <field name="apr_qty"/>
-                <field name="apr_amt"/>
-                <field name="may_qty"/>
-                <field name="may_amt"/>
-                <field name="jun_qty"/>
-                <field name="jun_amt"/>
-                <field name="jul_qty"/>
-                <field name="jul_amt"/>
-                <field name="aug_qty"/>
-                <field name="aug_amt"/>
-                <field name="sep_qty"/>
-                <field name="sep_amt"/>
-                <field name="oct_qty"/>
-                <field name="oct_amt"/>
-                <field name="nov_qty"/>
-                <field name="nov_amt"/>
-                <field name="dec_qty"/>
-                <field name="dec_amt"/>
-                <field name="jan_qty"/>
-                <field name="jan_amt"/>
-                <field name="feb_qty"/>
-                <field name="feb_amt"/>
-                <field name="mar_qty"/>
-                <field name="mar_amt"/>
+                <field name="rate_type" optional="1"/>
+                <field name="price_unit" optional="1"/>
+                <field name="year" optional="1"/>
+                
+                <!-- Monthly Quantities -->
+                <field name="apr_qty" sum="Qty" optional="1"/>
+                <field name="apr_amt" sum="Amt"/>
+                <field name="may_qty" sum="Qty" optional="1"/>
+                <field name="may_amt" sum="Amt"/>
+                <field name="jun_qty" sum="Qty" optional="1"/>
+                <field name="jun_amt" sum="Amt"/>
+                <field name="jul_qty" sum="Qty" optional="1"/>
+                <field name="jul_amt" sum="Amt"/>
+                <field name="aug_qty" sum="Qty" optional="1"/>
+                <field name="aug_amt" sum="Amt"/>
+                <field name="sep_qty" sum="Qty" optional="1"/>
+                <field name="sep_amt" sum="Amt"/>
+                <field name="oct_qty" sum="Qty" optional="1"/>
+                <field name="oct_amt" sum="Amt"/>
+                <field name="nov_qty" sum="Qty" optional="1"/>
+                <field name="nov_amt" sum="Amt"/>
+                <field name="dec_qty" sum="Qty" optional="1"/>
+                <field name="dec_amt" sum="Amt"/>
+                <field name="jan_qty" sum="Qty" optional="1"/>
+                <field name="jan_amt" sum="Amt"/>
+                <field name="feb_qty" sum="Qty" optional="1"/>
+                <field name="feb_amt" sum="Amt"/>
+                <field name="mar_qty" sum="Qty" optional="1"/>
+                <field name="mar_amt" sum="Amt"/>
+                
                 <field name="product_qty" sum="Total Qty"/>
                 <field name="amount" sum="Total Amount"/>
             </list>
@@ -49,11 +56,33 @@
         <field name="arch" type="xml">
             <search>
                 <field name="year"/>
-
+                <field name="doctor_id"/>
+                <field name="mr_id"/>
+                <field name="product_id"/>
+                <field name="category_id"/>
+                <field name="territory_id"/>
+                
+                <!-- Simple working filters -->
                 <filter string="Current Year"
                     name="current_year"
                     domain="[('is_current_fy', '=', True)]"/>
-
+                    
+                <separator/>
+                <filter string="Doctor" 
+                    name="group_doctor"
+                    context="{'group_by': 'doctor_id'}"/>
+                <filter string="Product" 
+                    name="group_product"
+                    context="{'group_by': 'product_id'}"/>
+                <filter string="MR" 
+                    name="group_mr"
+                    context="{'group_by': 'mr_id'}"/>
+                <filter string="Division" 
+                    name="group_division"
+                    context="{'group_by': 'category_id'}"/>
+                <filter string="Territory" 
+                    name="group_territory"
+                    context="{'group_by': 'territory_id'}"/>
             </search>
         </field>
     </record>
@@ -64,9 +93,11 @@
         <field name="view_mode">list</field>
         <field name="context">
             {
-             'search_default_current_year': 1
+                'search_default_current_year': 1,
+                'default_order': 'amount desc'
             }
         </field>
+        <field name="limit">200</field>
     </record>
 
     <menuitem id="menu_report_root" name="Reports" parent="ubik_app.menu_ubik_app" sequence="20"/>

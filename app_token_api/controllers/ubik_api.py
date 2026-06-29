@@ -399,10 +399,10 @@ class MrDoctorCreateAPI(http.Controller):
             }), content_type='application/json')
 
         # Allow MR / ASM / RSM / ZSM only
-        if employee.job_id.name not in ['MR', 'ASM', 'RSM', 'ZSM']:
+        if employee.job_id.name not in ['MR', 'ASM', 'RSM', 'ZSM', 'ISM']:
             return Response(json.dumps({
                 "success": False,
-                "message": "Only MR, ASM, RSM and ZSM can create visit records"
+                "message": "Only MR, ASM, RSM, ZSM and ISM can create visit records"
             }), content_type='application/json')
 
         if int(territory_id) not in employee.territory_ids.ids:
@@ -1007,10 +1007,10 @@ class MRDoctorEditAPI(http.Controller):
                     "message": "Employee not linked to this user"
                 }), content_type='application/json')
 
-            if employee.job_id.name not in ['MR', 'ASM', 'RSM', 'ZSM']:
+            if employee.job_id.name not in ['MR', 'ASM', 'RSM', 'ZSM', 'ISM']:
                 return Response(json.dumps({
                     "success": False,
-                    "message": "Only MR, ASM, RSM and ZSM can edit visit records"
+                    "message": "Only MR, ASM, RSM, ZSM and ISM can edit visit records"
                 }), content_type='application/json')
 
             # Parameters
@@ -1215,10 +1215,10 @@ class MRDoctorDeleteAPI(http.Controller):
                     "message": "Employee not linked to this user"
                 }), content_type='application/json')
 
-            if employee.job_id.name not in ['MR', 'ASM', 'RSM', 'ZSM']:
+            if employee.job_id.name not in ['MR', 'ASM', 'RSM', 'ZSM', 'ISM']:
                 return Response(json.dumps({
                     "success": False,
-                    "message": "Only MR, ASM, RSM and ZSM can delete visit records"
+                    "message": "Only MR, ASM, RSM, ZSM and ISM can delete visit records"
                 }), content_type='application/json')
 
             # Parameters

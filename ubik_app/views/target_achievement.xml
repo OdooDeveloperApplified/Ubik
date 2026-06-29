@@ -170,8 +170,6 @@
         </field>
     </record>
 
-
-
     <!-- Action -->
     <record id="action_mr_target_achievement_quarterly_report" model="ir.actions.act_window">
         <field name="name">Quarterly Target Achievement Report</field>
